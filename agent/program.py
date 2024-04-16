@@ -2,6 +2,7 @@
 # Project Part B: Game Playing Agent
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
+from referee.game.board import Board
 
 #import tensorflow as tf
 
@@ -11,6 +12,8 @@ class Agent:
     This class is the "entry point" for your agent, providing an interface to
     respond to various Tetress game events.
     """
+    
+    board = Board()
 
     def __init__(self, color: PlayerColor, **referee: dict):
         """
@@ -32,6 +35,7 @@ class Agent:
         
         # get the current game state
         #game_state = get_game_state()
+        game_state = Board()
         
         # find all possible actions
         #possible_actions = find_possible_actions(game_state)
@@ -68,6 +72,12 @@ class Agent:
         This method is called by the referee after an agent has taken their
         turn. You should use it to update the agent's internal game state. 
         """
+        
+        # NOTE: this is called three times per turn??
+        
+        self.board.apply_action(action)
+        
+        print(self.board.render())
 
         # There is only one action type, PlaceAction
         place_action: PlaceAction = action
