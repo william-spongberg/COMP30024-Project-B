@@ -3,6 +3,8 @@
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 
+#import tensorflow as tf
+
 
 class Agent:
     """
