@@ -73,7 +73,7 @@ class Agent:
         turn. You should use it to update the agent's internal game state. 
         """
         
-        # NOTE: this is called three times per turn??
+        # NOTE: called once per agent
         
         self.board.apply_action(action)
         
