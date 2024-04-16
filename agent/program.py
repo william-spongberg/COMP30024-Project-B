@@ -29,6 +29,17 @@ class Agent:
         This method is called by the referee each time it is the agent's turn
         to take an action. It must always return an action object. 
         """
+        
+        # get the current game state
+        #game_state = get_game_state()
+        
+        # find all possible actions
+        #possible_actions = find_possible_actions(game_state)
+        
+        # randomly select an action
+        #action = random.choice(possible_actions)
+        
+        
 
         # Below we have hardcoded two actions to be played depending on whether
         # the agent is playing as BLUE or RED. Obviously this won't work beyond
