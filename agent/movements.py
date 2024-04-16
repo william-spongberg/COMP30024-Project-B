@@ -1,5 +1,4 @@
 from referee.game import PlayerColor, Coord, PlaceAction
-from .tetronimos import get_moves
 from .heuristics import coord_distance_to_goal_line
 
 def get_valid_moves(board: dict[Coord, PlayerColor], tetronimos: list[PlaceAction], coord: Coord) -> list[PlaceAction]:
@@ -39,3 +38,14 @@ def is_valid(board: dict[Coord, PlayerColor], piece: PlaceAction) -> bool:
         if board.get(coord, None):
             return False
     return True
+
+def get_moves(coord: Coord, tetronimos: list[PlaceAction]) -> list[PlaceAction]:
+    """
+    get all possible tetronimo moves from a given coordinate
+    """
+    list_of_moves = []
+    for tetronimo in tetronimos:
+        move = [coord + Coord(x, y) for x, y in list(tetronimo.coords)]
+        move = PlaceAction(*move)
+        list_of_moves.append(move)
+    return list_of_moves
