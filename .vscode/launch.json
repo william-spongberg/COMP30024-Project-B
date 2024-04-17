@@ -7,7 +7,7 @@
             "request": "launch",
             "module": "referee",
             "console": "integratedTerminal",
-            "args": "-c agent agent ",
+            "args": "-c agent_random agent_next ",
             "env": {"PYTHONPATH": "${workspaceFolder}"}
         }
     ]
