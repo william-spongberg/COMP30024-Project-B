@@ -2,8 +2,8 @@
 # Project Part B: Game Playing Agent
 
 from tkinter import Place
-from agent.movements import get_valid_moves, get_valid_coords
-from agent.tetronimos import get_tetronimos
+from agent_random.movements import get_valid_moves, get_valid_coords
+from agent_random.tetronimos import get_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board, CellState
 import random
