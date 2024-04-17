@@ -52,12 +52,16 @@ class Agent:
         """
         
         coord = random.choice(get_valid_coords(self.game_state, self._color))
-        while (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
-            coord = random.choice(get_valid_coords(self.game_state, self._color))
+        # if no valid moves, pick a new coord
+        if (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
+            for coord in get_valid_coords(self.game_state, self._color):
+                if (get_valid_moves(self.game_state, self.tetronimos, coord) != []):
+                    break
         action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
         
         # in future will then play game out to end, but not update actual board
         
+        print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
         return action
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
@@ -66,14 +70,10 @@ class Agent:
         turn. You should use it to update the agent's internal game state. 
         """
         
-        # NOTE: called once per agent
-        
         self.game_board.apply_action(action)
         self.game_state = self.game_board._state
         
         #print(self.game_board.render())
 
         # print the action that was played
-        place_action: PlaceAction = action
-        c1, c2, c3, c4 = action.coords
-        print(f"{self.name} update: {color} played: {c1}, {c2}, {c3}, {c4}")
+        print(f"{self.name} *update*: {color} played: {PlaceAction(*action.coords)}")
