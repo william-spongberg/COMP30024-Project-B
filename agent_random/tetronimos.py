@@ -9,11 +9,12 @@ def get_tetronimos(coord: Coord) -> list[PlaceAction]:
     Get all possible tetronimos as PlaceActions.
     """
     
-    pieces: list[Piece] = []
     tetronimos = []
     for piece_type in PieceType:
         # all possible orientations of a piece
         tetronimos.append(create_piece(piece_type, coord))
+        # for coord_t in create_piece(piece_type, coord).coords:
+        #     tetronimos.append(create_piece(piece_type, coord_t))
             
     # remove duplicates
     tetronimos = list(set(tetronimos))
