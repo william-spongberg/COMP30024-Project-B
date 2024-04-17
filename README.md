@@ -1,7 +1,7 @@
 # Project Part B
 
-DevContainer:
-python -m referee agent agent
+## Running the project
 
-Windows:
-python -m referee -c agent agent
+python -m referee -c [agent] [agent]
+
+e.g python -m referee -c agent_random agent_next
