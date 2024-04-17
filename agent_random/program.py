@@ -64,7 +64,10 @@ class Agent:
         
         # in future will then play game out to end, but not update actual board
         
-        print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
+        if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
+            print(f"No valid moves for {self._color}")
+        else:
+            print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
         return action
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
