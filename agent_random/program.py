@@ -52,12 +52,15 @@ class Agent:
         """
         
         coord = random.choice(get_valid_coords(self.game_state, self._color))
+        action = PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)) # default
         # if no valid moves, pick a new coord
         if (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
             for coord in get_valid_coords(self.game_state, self._color):
                 if (get_valid_moves(self.game_state, self.tetronimos, coord) != []):
+                    action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
                     break
-        action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
+        else:
+            action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
         
         # in future will then play game out to end, but not update actual board
         

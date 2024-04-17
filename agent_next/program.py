@@ -6,8 +6,11 @@ from agent_random.movements import get_valid_moves, get_valid_coords
 from agent_random.tetronimos import get_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board, CellState
-from referee.run import run_game
 import random
+from referee.run import run_game
+from referee.agent import Player, AgentProxyPlayer
+from referee.log import LogStream, LogColor
+from referee.options import get_options, PlayerLoc
 
 #import tensorflow as tf
 
@@ -53,17 +56,25 @@ class Agent:
         """
         
         coord = random.choice(get_valid_coords(self.game_state, self._color))
+        action = PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)) # default
         # if no valid moves, pick a new coord
         if (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
             for coord in get_valid_coords(self.game_state, self._color):
                 if (get_valid_moves(self.game_state, self.tetronimos, coord) != []):
+                    action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
                     break
-        action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
+        else:
+            action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))  
         
-        # in future will then play game out to end, but not update actual board
-        
-        # use run_game() to simulate the game to the end
-        #run_game()
+        # initialize the game state to current
+        #player1._state = self.game_state.copy()
+        #player2._state = self.game_state.copy()
+
+        # use run_game to simulate the game to the end
+        #players = [player1, player2]
+        #event_handlers = []  # TODO: create and add event handlers
+
+        #final_state = run_game(players, event_handlers)
         
         print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
         return action
