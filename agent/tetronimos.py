@@ -1,33 +1,25 @@
-from referee.game import Coord, PlaceAction
-from referee.game.pieces import create_piece, piece_fingerprint, PieceType
+from tkinter import Place
+from referee.game import PlaceAction, Coord
+from referee.game.pieces import create_piece, piece_fingerprint, PieceType, Piece
 
 BOARD_N = 11
 
-def get_tetronimos() -> list[PlaceAction]:
+def get_tetronimos(coord: Coord) -> list[PlaceAction]:
     """
-    Get all possible tetronimos.
+    Get all possible tetronimos as PlaceActions.
     """
     
+    pieces: list[Piece] = []
     tetronimos = []
     for piece_type in PieceType:
-        tetronimos.append(create_piece(piece_type))
-    
-    # rotate each tetronimo
-    rotated_tetronimos = []
-    for tetronimo in tetronimos:
-        for i in range(4):
-            rotated_tetronimos.append(rotate(tetronimo, i))
-    
+        # all possible orientations of a piece
+        tetronimos.append(create_piece(piece_type, coord))
+            
     # remove duplicates
-    return list(set(rotated_tetronimos))
-
-def rotate(tetronimo: PlaceAction, times: int) -> PlaceAction:
-    """
-    Rotate a tetronimo a certain number of times.
-    """
-    rotated = list(tetronimo.coords)
-    for _ in range(times):
-        # rotated = [Coord(-y, x) for x, y in rotated] # rotate 90 degrees clockwise (x, y) -> (-y, x)
-        rotated = [(Coord(y, x) - Coord((2 * y) % BOARD_N, 0)) for x, y in rotated]
-    rotated = PlaceAction(*rotated)
-    return rotated
+    tetronimos = list(set(tetronimos))
+    
+    # convert all elements to PlaceAction
+    for i in range(len(tetronimos)):
+        tetronimos[i] = PlaceAction(*tetronimos[i].coords)
+    
+    return tetronimos

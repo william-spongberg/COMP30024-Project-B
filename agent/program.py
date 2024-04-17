@@ -1,8 +1,12 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
+from tkinter import Place
+from agent.movements import get_valid_moves, get_valid_coords
+from agent.tetronimos import get_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
-from referee.game.board import Board
+from referee.game.board import Board, CellState
+import random
 
 #import tensorflow as tf
 
@@ -13,19 +17,33 @@ class Agent:
     respond to various Tetress game events.
     """
     
-    board = Board()
+    # attributes
+    game_board: Board # to keep track of game
+    game_state: dict[Coord, CellState] # to try different moves
+    tetronimos: list[PlaceAction] # list of all possible tetronimos
 
     def __init__(self, color: PlayerColor, **referee: dict):
         """
         This constructor method runs when the referee instantiates the agent.
         Any setup and/or precomputation should be done here.
         """
+        self.game_board = Board()
+        self.game_state = self.game_board._state
+        self.tetronimos = get_tetronimos(Coord(0,0))
+        
+        # for tetronimo in get_tetronimos(Coord(5,5)):
+        #     board = Board()
+        #     board.apply_action(tetronimo)
+        #     print(board.render())
+        
         self._color = color
+        self.name = "Agent " + self._color.name
+        
         match color:
             case PlayerColor.RED:
-                print("Testing: I am playing as RED")
+                print(f"Testing: my name is {self.name} and I am playing as RED")
             case PlayerColor.BLUE:
-                print("Testing: I am playing as BLUE")
+                print(f"Testing: my name is {self.name} and I am playing as BLUE")
 
     def action(self, **referee: dict) -> Action:
         """
@@ -33,39 +51,14 @@ class Agent:
         to take an action. It must always return an action object. 
         """
         
-        # get the current game state
-        #game_state = get_game_state()
-        game_state = Board()
+        coord = random.choice(get_valid_coords(self.game_state, self._color))
+        while (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
+            coord = random.choice(get_valid_coords(self.game_state, self._color))
+        action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
         
-        # find all possible actions
-        #possible_actions = find_possible_actions(game_state)
+        # in future will then play game out to end, but not update actual board
         
-        # randomly select an action
-        #action = random.choice(possible_actions)
-        
-        
-
-        # Below we have hardcoded two actions to be played depending on whether
-        # the agent is playing as BLUE or RED. Obviously this won't work beyond
-        # the initial moves of the game, so you should use some game playing
-        # technique(s) to determine the best action to take.
-        match self._color:
-            case PlayerColor.RED:
-                print("Testing: RED is playing a PLACE action")
-                return PlaceAction(
-                    Coord(3, 3), 
-                    Coord(3, 4), 
-                    Coord(4, 3), 
-                    Coord(4, 4)
-                )
-            case PlayerColor.BLUE:
-                print("Testing: BLUE is playing a PLACE action")
-                return PlaceAction(
-                    Coord(2, 3), 
-                    Coord(2, 4), 
-                    Coord(2, 5), 
-                    Coord(2, 6)
-                )
+        return action
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
@@ -75,15 +68,12 @@ class Agent:
         
         # NOTE: called once per agent
         
-        self.board.apply_action(action)
+        self.game_board.apply_action(action)
+        self.game_state = self.game_board._state
         
-        print(self.board.render())
+        #print(self.game_board.render())
 
-        # There is only one action type, PlaceAction
+        # print the action that was played
         place_action: PlaceAction = action
-        c1, c2, c3, c4 = place_action.coords
-
-        # Here we are just printing out the PlaceAction coordinates for
-        # demonstration purposes. You should replace this with your own logic
-        # to update your agent's internal game state representation.
-        print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
+        c1, c2, c3, c4 = action.coords
+        print(f"{self.name} update: {color} played: {c1}, {c2}, {c3}, {c4}")
