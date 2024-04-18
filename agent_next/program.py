@@ -72,15 +72,27 @@ class Agent:
         else:
             action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
         
-        # if no valid moves, pick a new coord
+        # pick agents
         pl1 = PlayerLoc("agent_random", "Agent")
         pl2 = PlayerLoc("agent_random", "Agent")
         
+        # convert agents to players
         player1 : Player = AgentProxyPlayer("sim_p1", self._color, pl1, None, None)
         player2 : Player = AgentProxyPlayer("sim_p2", self.opponent, pl2, None, None)
 
+        # simulate game
         event_handlers = []  # TODO: create and add event handlers
-        sim_game: Player | None = asyncio.get_event_loop().run_until_complete(run_game([player1, player2], event_handlers))
+        sim_winner: Player | None = asyncio.get_event_loop().run_until_complete(run_game([player1, player2], event_handlers))
+        
+        # get colour from sim_game
+        if sim_winner:
+            if sim_winner.color == self._color:
+                print(f"{self._color} wins!")
+            else:
+                print(f"{self._color} loses!")
+        else:
+            print("Simulated game result: draw")
+        
         
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
             print(f"No valid moves for {self._color}")
