@@ -1,13 +1,14 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
+import asyncio
 from tkinter import Place
 from agent_random.movements import get_valid_moves, get_valid_coords
 from agent_random.tetronimos import get_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board, CellState
 import random
-from referee.run import run_game
+from referee.run import run_game, game
 from referee.agent import Player, AgentProxyPlayer
 from referee.log import LogStream, LogColor
 from referee.options import get_options, PlayerLoc
@@ -25,6 +26,7 @@ class Agent:
     game_board: Board # to keep track of game
     game_state: dict[Coord, CellState] # to try different moves
     tetronimos: list[PlaceAction] # list of all possible tetronimos
+    opponent: PlayerColor # to keep track of opponent
 
     def __init__(self, color: PlayerColor, **referee: dict):
         """
@@ -46,8 +48,10 @@ class Agent:
         match color:
             case PlayerColor.RED:
                 print(f"Testing: my name is {self.name} and I am playing as RED")
+                self.opponent = PlayerColor.BLUE
             case PlayerColor.BLUE:
                 print(f"Testing: my name is {self.name} and I am playing as BLUE")
+                self.opponent = PlayerColor.RED
 
     def action(self, **referee: dict) -> Action:
         """
@@ -57,30 +61,34 @@ class Agent:
         
         coord = random.choice(get_valid_coords(self.game_state, self._color))
         action = PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)) # default
+        
         # if no valid moves, pick a new coord
         if (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
+            # try all available coords
             for coord in get_valid_coords(self.game_state, self._color):
                 if (get_valid_moves(self.game_state, self.tetronimos, coord) != []):
                     action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
                     break
         else:
-            action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))  
+            action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
         
-        # initialize the game state to current
-        #player1._state = self.game_state.copy()
-        #player2._state = self.game_state.copy()
+        # if no valid moves, pick a new coord
+        pl1 = PlayerLoc("agent_random", "Agent")
+        pl2 = PlayerLoc("agent_random", "Agent")
+        
+        player1 : Player = AgentProxyPlayer("sim_p1", self._color, pl1, None, None)
+        player2 : Player = AgentProxyPlayer("sim_p2", self.opponent, pl2, None, None)
 
-        # use run_game to simulate the game to the end
-        #players = [player1, player2]
-        #event_handlers = []  # TODO: create and add event handlers
-
-        #final_state = run_game(players, event_handlers)
+        event_handlers = []  # TODO: create and add event handlers
+        sim_game: Player | None = asyncio.get_event_loop().run_until_complete(run_game([player1, player2], event_handlers))
         
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
             print(f"No valid moves for {self._color}")
         else:
             print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
         return action
+        
+    
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
