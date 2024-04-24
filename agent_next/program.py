@@ -3,15 +3,16 @@
 
 import asyncio
 from tkinter import Place
+from typing import AsyncGenerator
 from agent_random.movements import get_valid_moves, get_valid_coords
 from agent_random.tetronimos import get_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board, CellState
 import random
-from referee.run import run_game, game
+from referee.log import LogStream
+from referee.run import game_commentator, game_delay, game_event_logger, output_board_updates, run_game, game
 from referee.agent import Player, AgentProxyPlayer
-from referee.log import LogStream, LogColor
-from referee.options import get_options, PlayerLoc
+from referee.options import PlayerLoc
 
 #import tensorflow as tf
 
@@ -79,19 +80,34 @@ class Agent:
         # convert agents to players
         player1 : Player = AgentProxyPlayer("sim_p1", self._color, pl1, None, None)
         player2 : Player = AgentProxyPlayer("sim_p2", self.opponent, pl2, None, None)
+        
+        # pick event handlers
+        gl: LogStream = LogStream("name1")
+        rl: LogStream = LogStream("name2")
+        #event_handler: AsyncGenerator = []
+        event_handlers = [
+            game_event_logger(gl) if gl is not None else None,
+            game_commentator(rl),
+            output_board_updates(rl, True, True)
+        ]
 
         # simulate game
-        event_handlers = []  # TODO: create and add event handlers
+        #event_handlers = []  # TODO: create and add event handlers
         sim_winner: Player | None = asyncio.get_event_loop().run_until_complete(run_game([player1, player2], event_handlers))
         
         # get colour from sim_game
         if sim_winner:
             if sim_winner.color == self._color:
-                print(f"{self._color} wins!")
+                print(f"Simulated game: {self._color} wins!")
             else:
-                print(f"{self._color} loses!")
+                print(f"Simulated game: {self._color} loses!")
         else:
-            print("Simulated game result: draw")
+            print("Simulated game: draw")
+        
+        print(event_handlers)
+            
+        # TODO: fix sim_winner returning as RED every time due to BLUE likely making an error move
+        # (BLUE plays first due to this agent being blue and player1 set to this agent's colour)
         
         
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
