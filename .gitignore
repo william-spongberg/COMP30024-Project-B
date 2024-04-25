@@ -1,3 +1,6 @@
 __pycache__
-.pyc
-.txt
+sim_commentaries
+sim_results
+
+*.pyc
+*.txt
