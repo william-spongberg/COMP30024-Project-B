@@ -31,6 +31,8 @@ class Agent:
     game_state: dict[Coord, CellState] # to try different moves
     tetronimos: list[PlaceAction] # list of all possible tetronimos
     opponent: PlayerColor # to keep track of opponent
+    sim_results: list[str] # to keep track of simulation results
+    sim_commentary: list[str] # to keep track of simulation commentary
 
     def __init__(self, color: PlayerColor, **referee: dict):
         """
@@ -41,7 +43,9 @@ class Agent:
         self.game_state = self.game_board._state
         self.tetronimos = get_tetronimos(Coord(0,0))        
         self._color = color
-        self.name = "Agent " + self._color.name
+        self.name = "Agent_Next " + self._color.name
+        self.sim_results = []
+        self.sim_commentary = []
         
         # test tetronimos
         with open('tetronimos_test.txt', 'w') as f:
@@ -50,15 +54,16 @@ class Agent:
                 board.apply_action(tetronimo)
                 print(board.render(), file=f)
         
+        # announce agent
+        print(f"{self.name} *init*: {self._color}")
+        
         # set opponent colour        
         match color:
             case PlayerColor.RED:
-                print(f"Testing: my name is {self.name} and I am playing as RED")
                 self.opponent = PlayerColor.BLUE
             case PlayerColor.BLUE:
-                print(f"Testing: my name is {self.name} and I am playing as BLUE")
                 self.opponent = PlayerColor.RED
-
+    
     def action(self, **referee: dict) -> Action:
         """
         This method is called by the referee each time it is the agent's turn
@@ -77,7 +82,9 @@ class Agent:
                     break
         else:
             action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
-            
+        
+        # announce simulation
+        print("Simulated game: running...")
         
         # pick agents
         pl1 = PlayerLoc("agent_random", "Agent")
@@ -92,12 +99,12 @@ class Agent:
         player2._agent = RemoteProcessClassClient(pl2.pkg, pl2.cls, 100000, 100000, 1.0, 180.0, True, self.opponent)
         
         # pick event handlers
-        gl: LogStream = LogStream("sim_logger")
-        rl: LogStream = LogStream("sim___game")
+        gl: LogStream = LogStream("sim_logger", handlers = [self.file_log_handler], ansi=False)
+        rl: LogStream = LogStream("sim___game", handlers = [self.file_commentary_handler], ansi=False)
         event_handlers = [
-            game_event_logger(gl) if gl is not None else None,
-            game_commentator(rl),
-            output_board_updates(rl, True, True)
+            game_event_logger(gl) if gl is not None else None, # logs game events
+            game_commentator(rl), # commentates game less strictly than logs
+            output_board_updates(rl, False, True) # draws board updates
         ]
 
         # simulate game
@@ -105,23 +112,37 @@ class Agent:
         
         # get colour from sim_game
         if sim_winner:
+            print(f"Simulated game: {sim_winner.color} wins!")
+            
             if sim_winner.color == self._color:
-                print(f"Simulated game: {self.name} wins!")
+                print(f"[{self.name}] responsible for simulation: wins!")
             else:
-                print(f"Simulated game: {self.name} loses!")
+                print(f"[{self.name}] responsible for simulation: loses!")
         else:
             print("Simulated game: draw")
-            
-        # TODO: fix sim_winner returning as RED every time due to BLUE likely making an error move
-        # (BLUE plays first due to this agent being blue and player1 set to this agent's colour)
+        
+        # write simulated logs to file
+        with open('sim_results.txt', 'w') as f:
+            for result in self.sim_results:
+                print(result, file=f)
+        
+        # write commentary + board updates to file
+        with open('sim_commentary.txt', 'w') as f:
+            for result in self.sim_commentary:
+                print(result, file=f)
         
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
             print(f"No valid moves for {self._color}")
-        else:
-            print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
         return action
-        
     
+    def file_log_handler(self, message: str):
+        self.sim_results.append(message)
+    
+    def file_commentary_handler(self, message: str):
+        self.sim_commentary.append(message)
+    
+    def none_handler(self, message: str):
+        pass
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
@@ -131,8 +152,3 @@ class Agent:
         
         self.game_board.apply_action(action)
         self.game_state = self.game_board._state
-        
-        #print(self.game_board.render())
-
-        # print the action that was played
-        print(f"{self.name} *update*: {color} played: {PlaceAction(*action.coords)}")
