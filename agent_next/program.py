@@ -1,11 +1,13 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
+from argparse import Namespace
 import asyncio
 from tkinter import Place
 from typing import AsyncGenerator
 from agent_random.movements import get_valid_moves, get_valid_coords
 from agent_random.tetronimos import get_tetronimos
+from referee.agent.client import RemoteProcessClassClient
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board, CellState
 import random
@@ -36,16 +38,18 @@ class Agent:
         """
         self.game_board = Board()
         self.game_state = self.game_board._state
-        self.tetronimos = get_tetronimos(Coord(0,0))
-        
-        # for tetronimo in get_tetronimos(Coord(5,5)):
-        #     board = Board()
-        #     board.apply_action(tetronimo)
-        #     print(board.render())
-        
+        self.tetronimos = get_tetronimos(Coord(0,0))        
         self._color = color
         self.name = "Agent " + self._color.name
         
+        # test tetronimos
+        with open('out.txt', 'w') as f:
+            for tetronimo in get_tetronimos(Coord(5,5)):
+                board = Board()
+                board.apply_action(tetronimo)
+                print(board.render(), file=f)
+        
+        # set opponent colour        
         match color:
             case PlayerColor.RED:
                 print(f"Testing: my name is {self.name} and I am playing as RED")
@@ -72,6 +76,7 @@ class Agent:
                     break
         else:
             action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
+            
         
         # pick agents
         pl1 = PlayerLoc("agent_random", "Agent")
@@ -81,10 +86,13 @@ class Agent:
         player1 : Player = AgentProxyPlayer("sim_p1", self._color, pl1, None, None)
         player2 : Player = AgentProxyPlayer("sim_p2", self.opponent, pl2, None, None)
         
+        # add subprocesses for players
+        player1._agent = RemoteProcessClassClient(pl1.pkg, pl1.cls, 100000, 100000, 1.0, 180.0, True, self._color)
+        player2._agent = RemoteProcessClassClient(pl2.pkg, pl2.cls, 100000, 100000, 1.0, 180.0, True, self.opponent)
+        
         # pick event handlers
         gl: LogStream = LogStream("name1")
         rl: LogStream = LogStream("name2")
-        #event_handler: AsyncGenerator = []
         event_handlers = [
             game_event_logger(gl) if gl is not None else None,
             game_commentator(rl),
@@ -92,7 +100,6 @@ class Agent:
         ]
 
         # simulate game
-        #event_handlers = []  # TODO: create and add event handlers
         sim_winner: Player | None = asyncio.get_event_loop().run_until_complete(run_game([player1, player2], event_handlers))
         
         # get colour from sim_game
