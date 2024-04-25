@@ -140,9 +140,14 @@ class Agent:
         self.sim_commentary = []
         self.sim_game_num += 1
         
+        # TODO: read and analyse logs to improve agent
+        # log files are in sim_logs and sim_commentary
+        # log format: * sim_log/t: [time]/t[level]/tmessage
+        # (/t = tab)
+        
         # if no valid moves, print message        
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
-            print(f"No valid moves for {self._color}")
+            print(f"ERROR: No valid moves for {self._color}")
         return action
     
     def file_log_handler(self, message: str):
