@@ -145,8 +145,6 @@ class Agent:
             output_board_updates(rl, False, True),  # draws board updates
         ]
 
-        # TODO: put current board state into simulation
-
         # run simulation
         print("Simulated game: running...")
         sim_winner: Player | None = asyncio.get_event_loop().run_until_complete(
@@ -163,6 +161,10 @@ class Agent:
                 print(f"Agent [{self.name}] responsible for simulation loses!")
         else:
             print("Simulated game: draw")
+        
+        # TODO:
+        # if sim_winner != self._color:
+        #     # update heuristics + choose new move
 
         # write simulated logs to file
         with open(f"sim_logs/sim_log_{self.sim_game_num}.txt", "w") as f:
@@ -215,10 +217,10 @@ class Agent:
         }
         assert PlayerColor.RED in players
         assert PlayerColor.BLUE in players
-        
+
         board: Board = copy.deepcopy(self.game_board)
         board._turn_color = self._color
-        
+
         winner_color: PlayerColor | None = None
 
         yield GameBegin(board)
@@ -230,6 +232,7 @@ class Agent:
                 yield PlayerInitialising(p2)
                 async with p2:
                     
+                    # TODO: might not work if calling agent is RED instead of BLUE
                     # update players to current board state
                     for board_mutation in board._history:
                         for player in players.values():
@@ -238,8 +241,8 @@ class Agent:
                     # Each loop iteration is a turn.
                     while True:
                         # Get the current player.
-                        turn_color: PlayerColor = board._turn_color                        
-                        player: Player = players[board._turn_color]                        
+                        turn_color: PlayerColor = board._turn_color
+                        player: Player = players[board._turn_color]
 
                         # Get the current player's requested action.
                         turn_id = board.turn_count + 1
