@@ -29,7 +29,7 @@ def get_valid_coords(state: dict[Coord, CellState], player_colour: PlayerColor) 
                 if state[adjacent].player is None: # if adjacent is empty
                     valid_adjacents.append(adjacent)
     if not valid_adjacents:
-        print("no valid adjacents found, returning all coords")
+        #print("no valid adjacents found, returning all coords")
         for coord in state.keys():
             valid_adjacents.append(coord)
     return valid_adjacents
