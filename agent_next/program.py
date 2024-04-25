@@ -3,6 +3,7 @@
 
 from argparse import Namespace
 import asyncio
+from os import close
 from tkinter import Place
 from typing import AsyncGenerator
 from agent_random.movements import get_valid_moves, get_valid_coords
@@ -43,7 +44,7 @@ class Agent:
         self.name = "Agent " + self._color.name
         
         # test tetronimos
-        with open('out.txt', 'w') as f:
+        with open('tetronimos_test.txt', 'w') as f:
             for tetronimo in get_tetronimos(Coord(5,5)):
                 board = Board()
                 board.apply_action(tetronimo)
@@ -91,8 +92,8 @@ class Agent:
         player2._agent = RemoteProcessClassClient(pl2.pkg, pl2.cls, 100000, 100000, 1.0, 180.0, True, self.opponent)
         
         # pick event handlers
-        gl: LogStream = LogStream("name1")
-        rl: LogStream = LogStream("name2")
+        gl: LogStream = LogStream("sim_logger")
+        rl: LogStream = LogStream("sim___game")
         event_handlers = [
             game_event_logger(gl) if gl is not None else None,
             game_commentator(rl),
@@ -105,17 +106,14 @@ class Agent:
         # get colour from sim_game
         if sim_winner:
             if sim_winner.color == self._color:
-                print(f"Simulated game: {self._color} wins!")
+                print(f"Simulated game: {self.name} wins!")
             else:
-                print(f"Simulated game: {self._color} loses!")
+                print(f"Simulated game: {self.name} loses!")
         else:
             print("Simulated game: draw")
-        
-        print(event_handlers)
             
         # TODO: fix sim_winner returning as RED every time due to BLUE likely making an error move
         # (BLUE plays first due to this agent being blue and player1 set to this agent's colour)
-        
         
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
             print(f"No valid moves for {self._color}")
