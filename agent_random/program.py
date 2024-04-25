@@ -60,7 +60,7 @@ class Agent:
             action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
             
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
-            print(f"No valid moves for {self._color}")
+            print(f"ERROR: No valid moves for {self._color}")
         return action
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
