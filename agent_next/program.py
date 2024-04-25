@@ -31,8 +31,9 @@ class Agent:
     game_state: dict[Coord, CellState] # to try different moves
     tetronimos: list[PlaceAction] # list of all possible tetronimos
     opponent: PlayerColor # to keep track of opponent
-    sim_results: list[str] # to keep track of simulation results
+    sim_logs: list[str] # to keep track of simulation results
     sim_commentary: list[str] # to keep track of simulation commentary
+    sim_game_num: int # to keep track of simulation number
 
     def __init__(self, color: PlayerColor, **referee: dict):
         """
@@ -44,8 +45,9 @@ class Agent:
         self.tetronimos = get_tetronimos(Coord(0,0))        
         self._color = color
         self.name = "Agent_Next " + self._color.name
-        self.sim_results = []
+        self.sim_logs = []
         self.sim_commentary = []
+        self.sim_game_num = 0
         
         # test tetronimos
         with open('tetronimos_test.txt', 'w') as f:
@@ -70,6 +72,8 @@ class Agent:
         to take an action. It must always return an action object. 
         """
         
+        ## pick random move ##
+        
         coord = random.choice(get_valid_coords(self.game_state, self._color))
         action = PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)) # default
         
@@ -82,9 +86,8 @@ class Agent:
                     break
         else:
             action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
-        
-        # announce simulation
-        print("Simulated game: running...")
+            
+        ## simulate game within game ##        
         
         # pick agents
         pl1 = PlayerLoc("agent_random", "Agent")
@@ -99,49 +102,56 @@ class Agent:
         player2._agent = RemoteProcessClassClient(pl2.pkg, pl2.cls, 100000, 100000, 1.0, 180.0, True, self.opponent)
         
         # pick event handlers
-        gl: LogStream = LogStream("sim_logger", handlers = [self.file_log_handler], ansi=False)
-        rl: LogStream = LogStream("sim___game", handlers = [self.file_commentary_handler], ansi=False)
+        gl: LogStream = LogStream("sim_log", handlers = [self.file_log_handler], ansi=False)
+        rl: LogStream = LogStream("sim_game", handlers = [self.file_commentary_handler], ansi=False)
         event_handlers = [
             game_event_logger(gl) if gl is not None else None, # logs game events
             game_commentator(rl), # commentates game less strictly than logs
             output_board_updates(rl, False, True) # draws board updates
         ]
 
-        # simulate game
+        # run simulation
+        print("Simulated game: running...")
         sim_winner: Player | None = asyncio.get_event_loop().run_until_complete(run_game([player1, player2], event_handlers))
         
-        # get colour from sim_game
+        # get colour from sim_game, print result to terminal
         if sim_winner:
             print(f"Simulated game: {sim_winner.color} wins!")
             
             if sim_winner.color == self._color:
-                print(f"[{self.name}] responsible for simulation: wins!")
+                print(f"Agent [{self.name}] responsible for simulation: wins!")
             else:
-                print(f"[{self.name}] responsible for simulation: loses!")
+                print(f"Agent [{self.name}] responsible for simulation: loses!")
         else:
             print("Simulated game: draw")
         
         # write simulated logs to file
-        with open('sim_results.txt', 'w') as f:
-            for result in self.sim_results:
+        with open(f'sim_logs/sim_log_{self.sim_game_num}.txt', 'w') as f:
+            for result in self.sim_logs:
                 print(result, file=f)
         
         # write commentary + board updates to file
-        with open('sim_commentary.txt', 'w') as f:
+        with open(f'sim_commentaries/sim_commentary_{self.sim_game_num}.txt', 'w') as f:
             for result in self.sim_commentary:
                 print(result, file=f)
         
+        # update logs for end of simulation
+        self.sim_logs = []
+        self.sim_commentary = []
+        self.sim_game_num += 1
+        
+        # if no valid moves, print message        
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
             print(f"No valid moves for {self._color}")
         return action
     
     def file_log_handler(self, message: str):
-        self.sim_results.append(message)
+        self.sim_logs.append(message)
     
     def file_commentary_handler(self, message: str):
         self.sim_commentary.append(message)
     
-    def none_handler(self, message: str):
+    def null_event_handler(self, message: str):
         pass
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
