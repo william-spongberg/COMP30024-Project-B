@@ -29,21 +29,17 @@ class Agent:
         """
         self.game_board = Board()
         self.game_state = self.game_board._state
-        self.tetronimos = get_tetronimos(Coord(0,0))
-        
-        # for tetronimo in get_tetronimos(Coord(5,5)):
-        #     board = Board()
-        #     board.apply_action(tetronimo)
-        #     print(board.render())
-        
+        self.tetronimos = get_tetronimos(Coord(0,0))       
         self._color = color
-        self.name = "Agent " + self._color.name
+        self.name = "Agent_Random " + self._color.name
+        
+        print(f"{self.name} *init*: {self._color}")
         
         match color:
             case PlayerColor.RED:
-                print(f"Testing: my name is {self.name} and I am playing as RED")
+                self.opponent = PlayerColor.BLUE
             case PlayerColor.BLUE:
-                print(f"Testing: my name is {self.name} and I am playing as BLUE")
+                self.opponent = PlayerColor.RED
 
     def action(self, **referee: dict) -> Action:
         """
@@ -65,8 +61,6 @@ class Agent:
             
         if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
             print(f"No valid moves for {self._color}")
-        else:
-            print(f"{self.name} *action*: {self._color} to play: {PlaceAction(*action.coords)}")
         return action
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
@@ -77,8 +71,3 @@ class Agent:
         
         self.game_board.apply_action(action)
         self.game_state = self.game_board._state
-        
-        #print(self.game_board.render())
-
-        # print the action that was played
-        print(f"{self.name} *update*: {color} played: {PlaceAction(*action.coords)}")
