@@ -1,4 +1,3 @@
-from tkinter import Place
 from referee.game import PlaceAction, Coord
 from referee.game.pieces import create_piece, piece_fingerprint, PieceType, Piece
 
