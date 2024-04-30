@@ -37,6 +37,7 @@ from referee.options import PlayerLoc
 
 # import tensorflow as tf
 
+# TODO: redesign Board data structure to be more efficient
 
 class Agent:
     """
@@ -161,7 +162,7 @@ class Agent:
                 print(f"Agent [{self.name}] responsible for simulation loses!")
         else:
             print("Simulated game: draw")
-        
+
         # TODO:
         # if sim_winner != self._color:
         #     # update heuristics + choose new move
@@ -201,6 +202,9 @@ class Agent:
         pass
 
     ## sketchy but working - copied and altered game code ##
+    
+    # TODO: rewrite sim game logic to be far simpler + efficient
+    # try rewriting without using asyncio
 
     async def game(
         self,
@@ -231,7 +235,7 @@ class Agent:
 
                 yield PlayerInitialising(p2)
                 async with p2:
-                    
+
                     # TODO: might not work if calling agent is RED instead of BLUE
                     # update players to current board state
                     for board_mutation in board._history:
@@ -316,5 +320,4 @@ class Agent:
         self.game_state = self.game_board._state
 
 
-#class MonteCarloTreeSearchNode():
-    
+# class MonteCarloTreeSearchNode():
