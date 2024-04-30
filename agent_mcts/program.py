@@ -1,6 +1,7 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing self
 
+import copy
 import random
 
 # import tensorflow as tf
@@ -73,7 +74,7 @@ class Agent:
         to take an action. It must always return an action object.
         """
         root = MCTSNode(self.game_board)
-        action = root.best_action()
+        action = root.best_action(sim_no=1)
 
         if action:
             return action
@@ -133,11 +134,11 @@ class MCTSNode:
         return self._num_visits
 
     def expand(self):
+        board_node: Board = copy.deepcopy(self.board)
         action = self._actions.pop()
-        print(action)
-        # TODO: fix get_actions not returning valid actions
-        self.board.apply_action(action)
-        next_state = self.board._state
+        print(action)            
+        board_node.apply_action(action)
+        next_state = board_node._state
         child_node = MCTSNode(next_state, self, action)
 
         self.children.append(child_node)
@@ -150,13 +151,17 @@ class MCTSNode:
         return len(self._actions) == 0
 
     def rollout(self):
-        current_board = self.board
+        current_board = copy.deepcopy(self.board)
+        winner = None
         while not current_board.game_over:
             # light playout policy
             # TODO: implement heuristic-driven playout policy
-            action = self.get_random_move()
-            current_board.apply_action(action)
-        return current_board.winner_color
+            action = self.get_random_move(current_board)
+            if action:
+                current_board.apply_action(action)
+            else:
+                winner = current_board.turn_color.opponent
+        return winner
 
     def backpropagate(self, result):
         self._num_visits += 1
@@ -196,6 +201,9 @@ class MCTSNode:
                 return None
             # simulation
             reward = v.rollout()
+            if not reward:
+                print("ERROR: No winner found")
+                return None
             # backpropagation
             v.backpropagate(reward)
 
@@ -208,22 +216,21 @@ class MCTSNode:
         print("ERROR: No best child found")
         return None
 
-    def get_random_move(self) -> PlaceAction:
-        coord = random.choice(get_valid_coords(self.state, self.board.turn_color))
-        action = PlaceAction(
-            Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0)
-        )  # default
+    def get_random_move(self, board) -> PlaceAction | None:
+        state = board._state
+        coord = random.choice(get_valid_coords(state, board.turn_color))
+        action = None
         tetronimos = get_tetronimos(Coord(0, 0))
 
         # if no valid moves, pick a new coord
-        if get_valid_moves(self.state, tetronimos, coord) == []:
+        if get_valid_moves(state, tetronimos, coord) == []:
             # try all available coords
-            for coord in get_valid_coords(self.state, self.board.turn_color):
-                if get_valid_moves(self.state, tetronimos, coord) != []:
+            for coord in get_valid_coords(state, board.turn_color):
+                if get_valid_moves(state, tetronimos, coord) != []:
                     action = random.choice(
-                        get_valid_moves(self.state, tetronimos, coord)
+                        get_valid_moves(state, tetronimos, coord)
                     )
                     break
         else:
-            action = random.choice(get_valid_moves(self.state, tetronimos, coord))
+            action = random.choice(get_valid_moves(state, tetronimos, coord))
         return action
