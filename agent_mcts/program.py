@@ -107,7 +107,8 @@ class Agent:
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
         return random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
 
-
+# TODO: fix winners sometimes not being found
+# TODO: fix extreme inefficiency - see board redesign TODO
 class MCTSNode:
     def __init__(self, board, parent=None, parent_action=None):
         self.board: Board = board
