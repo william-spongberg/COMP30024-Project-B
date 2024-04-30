@@ -2,9 +2,13 @@
 # Project Part B: Game Playing Agent
 
 import asyncio
+from cmath import log
+from collections import defaultdict
 import copy
 import random
 from typing import AsyncGenerator
+from webbrowser import get
+from agent_random import tetronimos
 from agent_random.movements import get_valid_moves, get_valid_coords
 from agent_random.tetronimos import get_tetronimos
 from referee.agent.client import RemoteProcessClassClient
@@ -30,7 +34,6 @@ from referee.run import (
     game_commentator,
     game_event_logger,
     output_board_updates,
-    run_game,
 )
 from referee.agent import Player, AgentProxyPlayer
 from referee.options import PlayerLoc
@@ -38,6 +41,7 @@ from referee.options import PlayerLoc
 # import tensorflow as tf
 
 # TODO: redesign Board data structure to be more efficient
+
 
 class Agent:
     """
@@ -93,24 +97,7 @@ class Agent:
 
         ## pick random move ##
 
-        coord = random.choice(get_valid_coords(self.game_state, self._color))
-        action = PlaceAction(
-            Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0)
-        )  # default
-
-        # if no valid moves, pick a new coord
-        if get_valid_moves(self.game_state, self.tetronimos, coord) == []:
-            # try all available coords
-            for coord in get_valid_coords(self.game_state, self._color):
-                if get_valid_moves(self.game_state, self.tetronimos, coord) != []:
-                    action = random.choice(
-                        get_valid_moves(self.game_state, self.tetronimos, coord)
-                    )
-                    break
-        else:
-            action = random.choice(
-                get_valid_moves(self.game_state, self.tetronimos, coord)
-            )
+        action = self.get_random_move()
 
         ## simulate game within game ##
 
@@ -192,6 +179,23 @@ class Agent:
             print(f"ERROR: No valid moves for {self._color}")
         return action
 
+    def get_random_move(self) -> PlaceAction:
+        coords = get_valid_coords(self.game_state, self._color)
+        coord: Coord = random.choice(coords)
+        coords.remove(coord)
+
+        # try all available coords
+        while get_valid_moves(self.game_state, self.tetronimos, coord) == []:
+            if coords:
+                coord = random.choice(coords)
+                coords.remove(coord)
+            else:
+                break
+        # if no valid moves available
+        if get_valid_moves(self.game_state, self.tetronimos, coord) == []:
+            return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+        return random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
+
     def file_log_handler(self, message: str):
         self.sim_logs.append(message)
 
@@ -202,7 +206,7 @@ class Agent:
         pass
 
     ## sketchy but working - copied and altered game code ##
-    
+
     # TODO: rewrite sim game logic to be far simpler + efficient
     # try rewriting without using asyncio
 
@@ -318,6 +322,3 @@ class Agent:
 
         self.game_board.apply_action(action)
         self.game_state = self.game_board._state
-
-
-# class MonteCarloTreeSearchNode():

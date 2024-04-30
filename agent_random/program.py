@@ -7,19 +7,17 @@ from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board, CellState
 import random
 
-#import tensorflow as tf
-
 
 class Agent:
     """
     This class is the "entry point" for your agent, providing an interface to
     respond to various Tetress game events.
     """
-    
+
     # attributes
-    game_board: Board # to keep track of game
-    game_state: dict[Coord, CellState] # to try different moves
-    tetronimos: list[PlaceAction] # list of all possible tetronimos
+    game_board: Board  # to keep track of game
+    game_state: dict[Coord, CellState]  # to try different moves
+    tetronimos: list[PlaceAction]  # list of all possible tetronimos
 
     def __init__(self, color: PlayerColor, **referee: dict):
         """
@@ -28,12 +26,12 @@ class Agent:
         """
         self.game_board = Board()
         self.game_state = self.game_board._state
-        self.tetronimos = get_tetronimos(Coord(0,0))       
+        self.tetronimos = get_tetronimos(Coord(0, 0))
         self._color = color
         self.name = "Agent_Random " + self._color.name
-        
+
         print(f"{self.name} *init*: {self._color}")
-        
+
         match color:
             case PlayerColor.RED:
                 self.opponent = PlayerColor.BLUE
@@ -43,30 +41,32 @@ class Agent:
     def action(self, **referee: dict) -> Action:
         """
         This method is called by the referee each time it is the agent's turn
-        to take an action. It must always return an action object. 
+        to take an action. It must always return an action object.
         """
-        
-        coord = random.choice(get_valid_coords(self.game_state, self._color))
-        action = PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)) # default
-        # if no valid moves, pick a new coord
-        if (get_valid_moves(self.game_state, self.tetronimos, coord) == []):
-            # try all available coords
-            for coord in get_valid_coords(self.game_state, self._color):
-                if (get_valid_moves(self.game_state, self.tetronimos, coord) != []):
-                    action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
-                    break
-        else:
-            action = random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
-            
-        if action == PlaceAction(Coord(0,0), Coord(0,0), Coord(0,0), Coord(0,0)):
-            print(f"ERROR: No valid moves for {self._color}")
-        return action
+        return self.get_random_move()
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
         This method is called by the referee after an agent has taken their
-        turn. You should use it to update the agent's internal game state. 
+        turn. You should use it to update the agent's internal game state.
         """
-        
+
         self.game_board.apply_action(action)
         self.game_state = self.game_board._state
+    
+    def get_random_move(self) -> PlaceAction:
+        coords = get_valid_coords(self.game_state, self._color)
+        coord: Coord = random.choice(coords)
+        coords.remove(coord)
+
+        # try all available coords
+        while get_valid_moves(self.game_state, self.tetronimos, coord) == []:
+            if coords:
+                coord = random.choice(coords)
+                coords.remove(coord)
+            else:
+                break
+        # if no valid moves available
+        if get_valid_moves(self.game_state, self.tetronimos, coord) == []:
+            return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+        return random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
