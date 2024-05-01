@@ -1,7 +1,8 @@
-from cmath import log
-from collections import defaultdict
 import copy
 import random
+from cmath import log
+from collections import defaultdict
+
 from agent_random.movements import get_valid_coords, get_valid_moves
 from agent_random.tetronimos import get_tetronimos
 from referee.game.actions import PlaceAction
@@ -116,13 +117,13 @@ class MCTSNode:
                 print("ERROR: No tree policy node found")
                 return None
             # simulation
-            #print("simulating")
+            # print("simulating")
             reward = v.rollout()
             if not reward:
                 print("ERROR: No winner found")
                 return None
             # backpropagation
-            #print("backpropagating")
+            # print("backpropagating")
             v.backpropagate(reward)
 
         # return best action
