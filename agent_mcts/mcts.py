@@ -3,8 +3,8 @@ import random
 from cmath import log
 from collections import defaultdict
 
-from agent_random.movements import get_valid_coords, get_valid_moves
-from agent_random.tetronimos import get_tetronimos
+from agent_random.movements import valid_coords, valid_moves
+from agent_random.tetronimos import make_tetronimos
 from referee.game.actions import PlaceAction
 from referee.game.board import Board, CellState
 from referee.game.coord import Coord
@@ -21,27 +21,24 @@ class MCTSNode:
         self.parent_action: PlaceAction | None = parent_action
         self.children = []
 
-        self._num_visits = 0
-        self._actions: list[PlaceAction] = self.get_actions()
-        self._results = defaultdict(int)
-        self._results[1] = 0  # win
-        self._results[-1] = 0  # loss
+        self.num_visits = 0
+        self.actions: list[PlaceAction] = self.getactions()
+        self.results = defaultdict(int)
+        self.results[1] = 0  # win
+        self.results[-1] = 0  # loss
 
-    def get_actions(self):
-        coords: list[Coord] = get_valid_coords(self.state, self.board.turn_color)
-        tetronimos: list[PlaceAction] = get_tetronimos(Coord(0, 0))
+    def getactions(self):
+        coords: list[Coord] = valid_coords(self.state, self.board.turn_color)
+        tetronimos: list[PlaceAction] = make_tetronimos(Coord(0, 0))
         actions: list[PlaceAction] = []
         for coord in coords:
-            actions.extend(get_valid_moves(self.state, tetronimos, coord))
+            actions.extend(valid_moves(self.state, tetronimos, coord))
         # print("valid actions initially: ", actions)
         return actions
 
-    def num_visits(self):
-        return self._num_visits
-
     def expand(self):
         board_node: Board = copy.deepcopy(self.board)
-        action = self._actions.pop()
+        action = self.actions.pop()
         # print(action)
         board_node.apply_action(action)
         child_node: MCTSNode = MCTSNode(board_node, self, action)
@@ -53,8 +50,8 @@ class MCTSNode:
         return self.board.game_over
 
     def is_fully_expanded(self):
-        # print(len(self._actions))
-        return len(self._actions) == 0
+        # print(len(self.actions))
+        return len(self.actions) == 0
 
     def rollout(self):
         current_board: Board = copy.deepcopy(self.board)
@@ -74,8 +71,8 @@ class MCTSNode:
         return current_board.turn_color
 
     def backpropagate(self, result):
-        self._num_visits += 1
-        self._results[result] += 1
+        self.num_visits += 1
+        self.results[result] += 1
         if self.parent:
             self.parent.backpropagate(result)
 
@@ -83,14 +80,14 @@ class MCTSNode:
         best_score: float = -1.0
         best_child = None
         for child in self.children:
-            if child._num_visits == 0 or self._num_visits == 0:
-                exploit: float = child._results[1]
+            if child.num_visits == 0 or self.num_visits == 0:
+                exploit: float = child.results[1]
                 explore: float = 0.0
             else:
-                exploit: float = child._results[1] / child._num_visits
+                exploit: float = child.results[1] / child.num_visits
                 # TODO: fix potential error here in abs causing bad results
                 explore: float = (
-                    c_param * abs(2 * log(self._num_visits) / child._num_visits) ** 0.5
+                    c_param * abs(2 * log(self.num_visits) / child.num_visits) ** 0.5
                 )
             score: float = exploit + explore
             if score > best_score:
@@ -137,21 +134,21 @@ class MCTSNode:
 
     def get_random_move(self, board) -> PlaceAction | None:
         state = board._state
-        tetronimos = get_tetronimos(Coord(0, 0))
+        tetronimos = make_tetronimos(Coord(0, 0))
 
-        coords = get_valid_coords(state, board.turn_color)
+        coords = valid_coords(state, board.turn_color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         # try all available coords
-        while get_valid_moves(state, tetronimos, coord) == []:
+        while not valid_moves(state, tetronimos, coord):
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if get_valid_moves(state, tetronimos, coord) == []:
+        if not valid_moves(state, tetronimos, coord):
             return None
         # else return random valid move
-        return random.choice(get_valid_moves(state, tetronimos, coord))
+        return random.choice(valid_moves(state, tetronimos, coord))

@@ -3,8 +3,8 @@
 
 import random
 
-from agent_random.movements import get_valid_moves, get_valid_coords
-from agent_random.tetronimos import get_tetronimos
+from agent_random.movements import valid_moves, valid_coords
+from agent_random.tetronimos import make_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board
 
@@ -31,7 +31,7 @@ class Agent:
         self.board = Board()
         self.colour = color
         self.name = "Agent_Random " + self.colour.name
-        self.tetronimos = get_tetronimos(Coord(0, 0))
+        self.tetronimos = make_tetronimos(Coord(0, 0))
 
         match color:
             case PlayerColor.RED:
@@ -42,23 +42,23 @@ class Agent:
         print(f"{self.name} *initiated*: {self.colour}")
 
     def get_random_move(self) -> PlaceAction:
-        coords = get_valid_coords(self.board._state, self.colour)
+        coords = valid_coords(self.board._state, self.colour)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         # try all available coords
-        while get_valid_moves(self.board._state, self.tetronimos, coord) == []:
+        while valid_moves(self.board._state, self.tetronimos, coord) == []:
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if get_valid_moves(self.board._state, self.tetronimos, coord) == []:
+        if valid_moves(self.board._state, self.tetronimos, coord) == []:
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
 
         # return random move
-        return random.choice(get_valid_moves(self.board._state, self.tetronimos, coord))
+        return random.choice(valid_moves(self.board._state, self.tetronimos, coord))
 
 class AgentRandom:
     # wrap Agent class

@@ -1,7 +1,7 @@
 from referee.game import PlayerColor, Coord, PlaceAction, Direction
 from referee.game.board import Board, CellState
 
-def get_valid_moves(state: dict[Coord, CellState], tetronimos: list[PlaceAction], coord: Coord) -> list[PlaceAction]:
+def valid_moves(state: dict[Coord, CellState], tetronimos: list[PlaceAction], coord: Coord) -> list[PlaceAction]:
     """
     Get valid PlaceActions from a given coordinate.
     """
@@ -17,7 +17,7 @@ def get_valid_moves(state: dict[Coord, CellState], tetronimos: list[PlaceAction]
     #print(valid_moves)
     return valid_moves
 
-def get_valid_coords(state: dict[Coord, CellState], player_colour: PlayerColor) -> list[Coord]:
+def valid_coords(state: dict[Coord, CellState], player_colour: PlayerColor) -> list[Coord]:
     """
     Get valid adjacent coordinates from all over the board.
     """

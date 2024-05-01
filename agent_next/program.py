@@ -9,8 +9,8 @@ import random
 from typing import AsyncGenerator
 from webbrowser import get
 from agent_random import tetronimos
-from agent_random.movements import get_valid_moves, get_valid_coords
-from agent_random.tetronimos import get_tetronimos
+from agent_random.movements import valid_moves, valid_coords
+from agent_random.tetronimos import make_tetronimos
 from referee.agent.client import RemoteProcessClassClient
 from referee.game import (
     BoardUpdate,
@@ -65,7 +65,7 @@ class Agent:
         """
         self.game_board = Board()
         self.game_state = self.game_board._state
-        self.tetronimos = get_tetronimos(Coord(0, 0))
+        self.tetronimos = make_tetronimos(Coord(0, 0))
         self._color = color
         self.name = "Agent_Next " + self._color.name
         self.sim_logs = []
@@ -74,7 +74,7 @@ class Agent:
 
         # test tetronimos
         with open("tetronimos_test.txt", "w") as f:
-            for tetronimo in get_tetronimos(Coord(5, 5)):
+            for tetronimo in make_tetronimos(Coord(5, 5)):
                 board = Board()
                 board.apply_action(tetronimo)
                 print(board.render(), file=f)
@@ -180,21 +180,21 @@ class Agent:
         return action
 
     def get_random_move(self) -> PlaceAction:
-        coords = get_valid_coords(self.game_state, self._color)
+        coords = valid_coords(self.game_state, self._color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         # try all available coords
-        while get_valid_moves(self.game_state, self.tetronimos, coord) == []:
+        while valid_moves(self.game_state, self.tetronimos, coord) == []:
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if get_valid_moves(self.game_state, self.tetronimos, coord) == []:
+        if valid_moves(self.game_state, self.tetronimos, coord) == []:
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
-        return random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
+        return random.choice(valid_moves(self.game_state, self.tetronimos, coord))
 
     def file_log_handler(self, message: str):
         self.sim_logs.append(message)

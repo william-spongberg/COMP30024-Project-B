@@ -5,8 +5,8 @@ import random
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
-from agent_random.movements import get_valid_coords, get_valid_moves
-from agent_random.tetronimos import get_tetronimos
+from agent_random.movements import valid_coords, valid_moves
+from agent_random.tetronimos import make_tetronimos
 from referee.game import (
     PlayerColor,
     Action,
@@ -36,8 +36,7 @@ class Agent:
 
         if action:
             return action
-        else:
-            return self.get_random_move()
+        return self.random_move()
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
@@ -46,7 +45,7 @@ class Agent:
         self.board = Board()
         self.colour = color
         self.name = "Agent_MCTS " + self.colour.name
-        self.tetronimos = get_tetronimos(Coord(0, 0))
+        self.tetronimos = make_tetronimos(Coord(0, 0))
 
         match color:
             case PlayerColor.RED:
@@ -57,30 +56,30 @@ class Agent:
         print(f"{self.name} *initiated*: {self.colour}")
 
     def test_tetronimos(self):
-        with open("tetronimos_test.txt", "w") as f:
-            for tetronimo in get_tetronimos(Coord(5, 5)):
+        with open("tetronimos_test.txt", "w", encoding="utf-8") as f:
+            for tetronimo in make_tetronimos(Coord(5, 5)):
                 board = Board()
                 board.apply_action(tetronimo)
                 print(board.render(), file=f)
 
-    def get_random_move(self) -> PlaceAction:
-        coords = get_valid_coords(self.board._state, self.colour)
+    def random_move(self) -> PlaceAction:
+        coords = valid_coords(self.board._state, self.colour)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         # try all available coords
-        while get_valid_moves(self.board._state, self.tetronimos, coord) == []:
+        while not valid_moves(self.board._state, self.tetronimos, coord):
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if get_valid_moves(self.board._state, self.tetronimos, coord) == []:
+        if not valid_moves(self.board._state, self.tetronimos, coord):
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
 
         # return random move
-        return random.choice(get_valid_moves(self.board._state, self.tetronimos, coord))
+        return random.choice(valid_moves(self.board._state, self.tetronimos, coord))
 
 
 class AgentMCTS:

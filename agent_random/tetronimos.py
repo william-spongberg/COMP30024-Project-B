@@ -3,7 +3,7 @@ from referee.game.pieces import create_piece, PieceType
 
 BOARD_N = 11
 
-def get_tetronimos(coord: Coord) -> list[PlaceAction]:
+def make_tetronimos(coord: Coord) -> list[PlaceAction]:
     """
     Get all possible tetronimos as PlaceActions.
     """
