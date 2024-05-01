@@ -9,11 +9,13 @@
 ## Running the project
 
 python -m referee -c [agent] [agent]
-
-e.g python -m referee -c agent_random agent_mcts
+(e.g python -m referee -c agent_random agent_mcts)
 
 ## Testing the project
 
-python -m test [agent] [agent]
+1. python -m pip install snakeviz
 
-e.g python -m test agent_random agent_mcts
+2. python -m cProfile -o test.prof test.py [agent] [agent]
+(e.g python -m cProfile -o test.prof test.py agent_random agent_mcts)
+
+3. snakeviz test.prof
