@@ -23,7 +23,6 @@ class Agent:
     # attributes
     board: Board  # state of game
     colour: PlayerColor  # agent colour
-    name: str  # agent name
     opponent: PlayerColor  # agent opponent
     tetronimos: list[PlaceAction]  # list of all possible tetronimos
 
@@ -46,7 +45,7 @@ class Agent:
     def init(self, color: PlayerColor):
         self.board = Board()
         self.colour = color
-        self.name = "Agent_MCTS " + color.name
+        self.name = "Agent_MCTS " + self.colour.name
         self.tetronimos = get_tetronimos(Coord(0, 0))
 
         match color:
@@ -82,3 +81,20 @@ class Agent:
 
         # return random move
         return random.choice(get_valid_moves(self.board._state, self.tetronimos, coord))
+
+
+class AgentMCTS:
+    # wrap Agent class
+
+    def __init__(self, color: PlayerColor, **referee: dict):
+        self.agent = Agent(color)
+
+    def action(self, **referee: dict) -> Action:
+        return self.agent.action()
+
+    def update(self, color: PlayerColor, action: Action, **referee: dict):
+        self.agent.update(color, action)
+
+    @property
+    def colour(self):
+        return self.agent.colour

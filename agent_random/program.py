@@ -2,6 +2,7 @@
 # Project Part B: Game Playing Agent
 
 import random
+
 from agent_random.movements import get_valid_moves, get_valid_coords
 from agent_random.tetronimos import get_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
@@ -29,7 +30,7 @@ class Agent:
     def init(self, color: PlayerColor):
         self.board = Board()
         self.colour = color
-        self.name = "Agent_Random " + color.name
+        self.name = "Agent_Random " + self.colour.name
         self.tetronimos = get_tetronimos(Coord(0, 0))
 
         match color:
@@ -58,3 +59,18 @@ class Agent:
 
         # return random move
         return random.choice(get_valid_moves(self.board._state, self.tetronimos, coord))
+
+class AgentRandom:
+    # wrap Agent class
+    def __init__(self, color: PlayerColor, **referee: dict):
+        self.agent = Agent(color)
+    
+    def action(self, **referee: dict) -> Action:
+        return self.agent.action()
+    
+    def update(self, color: PlayerColor, action: Action, **referee: dict):
+        self.agent.update(color, action)
+        
+    @property
+    def colour(self):
+        return self.agent.colour
