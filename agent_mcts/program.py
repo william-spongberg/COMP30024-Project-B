@@ -72,7 +72,7 @@ class Agent:
         to take an action. It must always return an action object.
         """
         root = MCTSNode(self.game_board)
-        action = root.best_action(sim_no=1)
+        action = root.best_action(sim_no=10)
 
         if action:
             return action
@@ -177,13 +177,13 @@ class MCTSNode:
         best_score: float = -1.0
         best_child = None
         for child in self.children:
-            if child._num_visits == 0:
+            if child._num_visits == 0 or self._num_visits == 0:
                 exploit: float = child._results[1]
                 explore: float = 0.0
             else:
                 exploit: float = child._results[1] / child._num_visits
-                explore: float = c_param * (2 * log(self._num_visits) / child._num_visits) ** 0.5
-            # TODO: fix dividing by zero causing complex numbers
+                # TODO: fix potential error here in abs causing bad results
+                explore: float = c_param * abs(2 * log(self._num_visits) / child._num_visits) ** 0.5
             score: float = exploit + explore
             if score > best_score:
                 best_score = score
@@ -219,9 +219,9 @@ class MCTSNode:
             v.backpropagate(reward)
 
         # return best action
-        best_child = self.best_child(c_param = 0.0) # c_param = 0.0
+        best_child = self.best_child(c_param=0.0) # c_param = 0.0
         if best_child:
-            return best_child._parent_action
+            return best_child.parent_action
 
         # if no best child, print error + return None
         print("ERROR: No best child found")
