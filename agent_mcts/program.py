@@ -22,7 +22,7 @@ class Agent:
 
     # attributes
     board: Board  # state of game
-    colour: PlayerColor  # agent colour
+    color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
     tetronimos: list[PlaceAction]  # list of all possible tetronimos
 
@@ -31,7 +31,7 @@ class Agent:
         self.test_tetronimos()
 
     def action(self, **referee: dict) -> Action:
-        root = MCTSNode(self.board)
+        root = MCTSNode(self.board._state, self.color)
         action = root.best_action(sim_no=5)
 
         if action:
@@ -43,8 +43,8 @@ class Agent:
 
     def init(self, color: PlayerColor):
         self.board = Board()
-        self.colour = color
-        self.name = "Agent_MCTS " + self.colour.name
+        self.color = color
+        self.name = "Agent_MCTS " + self.color.name
         self.tetronimos = make_tetronimos(Coord(0, 0))
 
         match color:
@@ -53,7 +53,7 @@ class Agent:
             case PlayerColor.BLUE:
                 self.opponent = PlayerColor.RED
 
-        print(f"{self.name} *initiated*: {self.colour}")
+        print(f"{self.name} *initiated*: {self.color}")
 
     def test_tetronimos(self):
         with open("tetronimos_test.txt", "w", encoding="utf-8") as f:
@@ -63,7 +63,7 @@ class Agent:
                 print(board.render(), file=f)
 
     def random_move(self) -> PlaceAction:
-        coords = valid_coords(self.board._state, self.colour)
+        coords = valid_coords(self.board._state, self.color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
@@ -96,4 +96,4 @@ class AgentMCTS:
 
     @property
     def colour(self):
-        return self.agent.colour
+        return self.agent.color
