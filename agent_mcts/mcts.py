@@ -67,10 +67,10 @@ class MCTSNode:
                 # print(current_board.render())
             # if no action available, other player wins
             else:
-                print("winner: ", current_board.turn_color.opponent)
+                #print("winner: ", current_board.turn_color.opponent)
                 return current_board.turn_color.opponent
         # game over but we still have moves => we win
-        print("winner: ", current_board.turn_color)
+        #print("winner: ", current_board.turn_color)
         return current_board.turn_color
 
     def backpropagate(self, result):
