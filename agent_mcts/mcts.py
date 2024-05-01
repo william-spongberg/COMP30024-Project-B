@@ -14,7 +14,13 @@ from referee.game.coord import Coord
 
 
 class MCTSNode:
+    """
+    Node class for the Monte Carlo Tree Search algorithm
+    """
     def __init__(self, board: Board, parent=None, parent_action=None):
+        """
+        Initialize the node with the current board state
+        """
         self.board: Board = board
         self.state: dict[Coord, CellState] = board._state
         self.parent: MCTSNode | None = parent
@@ -22,12 +28,15 @@ class MCTSNode:
         self.children = []
 
         self.num_visits = 0
-        self.actions: list[PlaceAction] = self.getactions()
+        self.actions: list[PlaceAction] = self.find_actions()
         self.results = defaultdict(int)
         self.results[1] = 0  # win
         self.results[-1] = 0  # loss
 
-    def getactions(self):
+    def find_actions(self):
+        """
+        Find all possible valid actions for the current state
+        """
         coords: list[Coord] = valid_coords(self.state, self.board.turn_color)
         tetronimos: list[PlaceAction] = make_tetronimos(Coord(0, 0))
         actions: list[PlaceAction] = []
@@ -37,6 +46,9 @@ class MCTSNode:
         return actions
 
     def expand(self):
+        """
+        Expand the current node by adding a new child node
+        """
         board_node: Board = copy.deepcopy(self.board)
         action = self.actions.pop()
         # print(action)
@@ -54,6 +66,9 @@ class MCTSNode:
         return len(self.actions) == 0
 
     def rollout(self):
+        """
+        Simulate a random v random game from the current node
+        """
         current_board: Board = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
@@ -64,19 +79,25 @@ class MCTSNode:
                 # print(current_board.render())
             # if no action available, other player wins
             else:
-                #print("winner: ", current_board.turn_color.opponent)
+                # print("winner: ", current_board.turn_color.opponent)
                 return current_board.turn_color.opponent
         # game over but we still have moves => we win
-        #print("winner: ", current_board.turn_color)
+        # print("winner: ", current_board.turn_color)
         return current_board.turn_color
 
     def backpropagate(self, result):
+        """
+        Backpropagate the result of the simulation up the tree
+        """
         self.num_visits += 1
         self.results[result] += 1
         if self.parent:
             self.parent.backpropagate(result)
 
     def best_child(self, c_param=1.4):
+        """
+        Select the best child node based on the UCB1 formula
+        """
         best_score: float = -1.0
         best_child = None
         for child in self.children:
@@ -96,6 +117,9 @@ class MCTSNode:
         return best_child
 
     def _tree_policy(self):
+        """
+        Select a node to expand based on the tree policy
+        """
         current_node: MCTSNode | None = self
         # select nodes to expand
         while current_node and not current_node.is_terminal_node():
@@ -106,7 +130,9 @@ class MCTSNode:
         return current_node
 
     def best_action(self, sim_no=100) -> PlaceAction | None:
-        # run MCTS
+        """
+        Perform MCTS search for the best action
+        """
         for _ in range(sim_no):
             # expansion
             v: MCTSNode | None = self._tree_policy()
@@ -133,6 +159,9 @@ class MCTSNode:
         return None
 
     def get_random_move(self, board) -> PlaceAction | None:
+        """
+        Get a random move for the current state
+        """
         state = board._state
         tetronimos = make_tetronimos(Coord(0, 0))
 
