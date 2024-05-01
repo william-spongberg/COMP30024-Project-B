@@ -32,7 +32,7 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         root = MCTSNode(self.board)
-        action = root.best_action(sim_no=25)
+        action = root.best_action(sim_no=5)
 
         if action:
             return action
