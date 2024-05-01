@@ -1,5 +1,5 @@
 from referee.game import PlaceAction, Coord
-from referee.game.pieces import create_piece, piece_fingerprint, PieceType, Piece
+from referee.game.pieces import create_piece, PieceType
 
 BOARD_N = 11
 
@@ -9,17 +9,16 @@ def get_tetronimos(coord: Coord) -> list[PlaceAction]:
     """
     
     tetronimos = []
+    
+    # get all possible orientations of a piece
     for piece_type in PieceType:
-        # all possible orientations of a piece
         tetronimos.append(create_piece(piece_type, coord))
-        # for coord_t in create_piece(piece_type, coord).coords:
-        #     tetronimos.append(create_piece(piece_type, coord_t))
             
     # remove duplicates
     tetronimos = list(set(tetronimos))
     
     # convert all elements to PlaceAction
-    for i in range(len(tetronimos)):
-        tetronimos[i] = PlaceAction(*tetronimos[i].coords)
+    for i, tetronimo in enumerate(tetronimos):
+        tetronimos[i] = PlaceAction(*tetronimo.coords)
     
     return tetronimos
