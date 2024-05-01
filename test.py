@@ -47,5 +47,5 @@ def play_game():
     print(game_state.winner_color, " wins")
 
 # profile the game
-#play_game()
-cProfile.run('play_game()')
+play_game()
+#cProfile.run('play_game()')
