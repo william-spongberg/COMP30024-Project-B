@@ -4,10 +4,12 @@ from cmath import log
 from collections import defaultdict
 
 from agent_random.movements import valid_coords, valid_moves
-from agent_random.tetronimos import make_tetronimos
+from agent_random.tetronimos import BOARD_N, make_tetronimos
 from referee.game.actions import PlaceAction
-from referee.game.board import Board, CellState
+from referee.game.board import CellState
+from referee.game.constants import MAX_TURNS
 from referee.game.coord import Coord
+from referee.game.player import PlayerColor
 
 # TODO: make more efficient
 # TODO: implement heuristic-driven playout policy
@@ -17,43 +19,42 @@ class MCTSNode:
     """
     Node class for the Monte Carlo Tree Search algorithm
     """
-    def __init__(self, board: Board, parent=None, parent_action=None):
+
+    def __init__(
+        self,
+        state: dict[Coord, CellState],
+        color: PlayerColor = PlayerColor.RED,
+        parent=None,
+        parent_action=None,
+    ):
         """
         Initialize the node with the current board state
         """
-        self.board: Board = board
-        self.state: dict[Coord, CellState] = board._state
+        self.board: SimBoard = SimBoard(state, color)
         self.parent: MCTSNode | None = parent
         self.parent_action: PlaceAction | None = parent_action
-        self.children = []
+        self.children: list[MCTSNode] = []
 
         self.num_visits = 0
-        self.actions: list[PlaceAction] = self.find_actions()
+        self.actions: list[PlaceAction] = find_actions(
+            self.board.state, self.board.turn_color
+        )
         self.results = defaultdict(int)
         self.results[1] = 0  # win
         self.results[-1] = 0  # loss
-
-    def find_actions(self):
-        """
-        Find all possible valid actions for the current state
-        """
-        coords: list[Coord] = valid_coords(self.state, self.board.turn_color)
-        tetronimos: list[PlaceAction] = make_tetronimos(Coord(0, 0))
-        actions: list[PlaceAction] = []
-        for coord in coords:
-            actions.extend(valid_moves(self.state, tetronimos, coord))
-        # print("valid actions initially: ", actions)
-        return actions
 
     def expand(self):
         """
         Expand the current node by adding a new child node
         """
-        board_node: Board = copy.deepcopy(self.board)
+        board_node: SimBoard = copy.deepcopy(self.board)
         action = self.actions.pop()
         # print(action)
         board_node.apply_action(action)
-        child_node: MCTSNode = MCTSNode(board_node, self, action)
+        #print(board_node)
+        child_node: MCTSNode = MCTSNode(
+            board_node.state, parent=self, parent_action=action
+        )
 
         self.children.append(child_node)
         return child_node
@@ -69,7 +70,7 @@ class MCTSNode:
         """
         Simulate a random v random game from the current node
         """
-        current_board: Board = copy.deepcopy(self.board)
+        current_board: SimBoard = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
             action = self.get_random_move(current_board)
@@ -162,7 +163,7 @@ class MCTSNode:
         """
         Get a random move for the current state
         """
-        state = board._state
+        state: dict[Coord, CellState] = board.state
         tetronimos = make_tetronimos(Coord(0, 0))
 
         coords = valid_coords(state, board.turn_color)
@@ -181,3 +182,128 @@ class MCTSNode:
             return None
         # else return random valid move
         return random.choice(valid_moves(state, tetronimos, coord))
+
+
+def find_actions(
+    state: dict[Coord, CellState], color: PlayerColor
+) -> list[PlaceAction]:
+    """
+    Find all possible valid actions for the current state
+    """
+    coords: list[Coord] = valid_coords(state, color)
+    tetronimos: list[PlaceAction] = make_tetronimos(Coord(0, 0))
+    actions: list[PlaceAction] = []
+    for coord in coords:
+        actions.extend(valid_moves(state, tetronimos, coord))
+    return actions
+
+
+class SimBoard:
+    """
+    Light weight adaptation of the Board class
+    """
+
+    def __init__(
+        self,
+        state: dict[Coord, CellState] | None = None,
+        color: PlayerColor = PlayerColor.RED,
+    ):
+        """
+        Initialize the board state
+        """
+        if state:
+            self.state: dict[Coord, CellState] = state
+        else:
+            self.state: dict[Coord, CellState] = self.empty_state()
+        self.turn_color: PlayerColor = color
+        self.turn_count = 0
+
+    def __getitem__(self, coord: Coord) -> CellState:
+        return self.state[coord]
+
+    def __setitem__(self, coord: Coord, cell: CellState):
+        self.state[coord] = cell
+
+    def empty_state(self) -> dict[Coord, CellState]:
+        return {
+            Coord(r, c): CellState() for r in range(BOARD_N) for c in range(BOARD_N)
+        }
+
+    def apply_action(self, action: PlaceAction):
+        """
+        Apply the action to the current state
+        """
+        for coord in action.coords:
+            self.state[coord] = CellState(self.turn_color)
+        self.turn_color = self.turn_color.opponent
+        self.turn_count += 1
+
+    def render(self, use_color: bool = False) -> str:
+        """
+        Returns a visualisation of the game board as a multiline string, with
+        optional ANSI color codes and Unicode characters (if applicable).
+        """
+
+        def apply_ansi(str, bold=True, color=None):
+            bold_code = "\033[1m" if bold else ""
+            color_code = ""
+            if color == "r":
+                color_code = "\033[31m"
+            if color == "b":
+                color_code = "\033[34m"
+            return f"{bold_code}{color_code}{str}\033[0m"
+
+        output = ""
+        for r in range(BOARD_N):
+            for c in range(BOARD_N):
+                if self._cell_occupied(Coord(r, c)):
+                    color = self.state[Coord(r, c)].player
+                    color = "r" if color == PlayerColor.RED else "b"
+                    text = f"{color}"
+                    if use_color:
+                        output += apply_ansi(text, color=color, bold=False)
+                    else:
+                        output += text
+                else:
+                    output += "."
+                output += " "
+            output += "\n"
+        return output
+
+    def _cell_occupied(self, coord: Coord) -> bool:
+        return self.state[coord].player != None
+
+    def _cell_empty(self, coord: Coord) -> bool:
+        return self.state[coord].player == None
+
+    def _player_token_count(self, color: PlayerColor) -> int:
+        return sum(1 for cell in self.state.values() if cell.player == color)
+
+    def _occupied_coords(self) -> set[Coord]:
+        return set(filter(self._cell_occupied, self.state.keys()))
+
+    def __eq__(self, other):
+        return self.state == other.state
+
+    def __str__(self):
+        return self.render()
+
+    def __repr__(self):
+        return self.__str__()
+
+    @property
+    def turn_limit_reached(self) -> bool:
+        return self.turn_count >= MAX_TURNS
+
+    @property
+    def game_over(self) -> bool:
+        """
+        The game is over if turn limit reached or no player can place any more pieces.
+        """
+        return self.turn_limit_reached or (
+            not find_actions(self.state, PlayerColor.RED)
+            and not find_actions(self.state, PlayerColor.BLUE)
+        )
+    
+    # TODO: what happens on turn_limit_reached?
+    # TODO: fix opposite colour being reported winner
