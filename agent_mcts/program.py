@@ -7,7 +7,6 @@ import random
 # import tensorflow as tf
 from cmath import log
 from collections import defaultdict
-from agent_random import tetronimos
 from agent_random.movements import get_valid_coords, get_valid_moves
 from agent_random.tetronimos import get_tetronimos
 from referee.game import (
@@ -15,7 +14,6 @@ from referee.game import (
     Action,
     PlaceAction,
     Coord,
-    actions,
 )
 from referee.game.board import Board, CellState
 
@@ -107,14 +105,13 @@ class Agent:
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
         return random.choice(get_valid_moves(self.game_state, self.tetronimos, coord))
 
-# TODO: fix winners sometimes not being found
 # TODO: fix extreme inefficiency - see board redesign TODO
 class MCTSNode:
-    def __init__(self, board, parent=None, parent_action=None):
+    def __init__(self, board: Board, parent=None, parent_action=None):
         self.board: Board = board
         self.state: dict[Coord, CellState] = board._state
-        self.parent = parent
-        self.parent_action = parent_action
+        self.parent: MCTSNode | None = parent
+        self.parent_action: PlaceAction | None = parent_action
         self.children = []
 
         self._num_visits = 0
@@ -129,6 +126,7 @@ class MCTSNode:
         actions: list[PlaceAction] = []
         for coord in coords:
             actions.extend(get_valid_moves(self.state, tetronimos, coord))
+        #print("valid actions initially: ", actions)
         return actions
 
     def num_visits(self):
@@ -137,10 +135,9 @@ class MCTSNode:
     def expand(self):
         board_node: Board = copy.deepcopy(self.board)
         action = self._actions.pop()
-        print(action)            
+        #print(action)            
         board_node.apply_action(action)
-        next_state = board_node._state
-        child_node = MCTSNode(next_state, self, action)
+        child_node: MCTSNode = MCTSNode(board_node, self, action)
 
         self.children.append(child_node)
         return child_node
@@ -149,20 +146,26 @@ class MCTSNode:
         return self.board.game_over
 
     def is_fully_expanded(self):
+        #print(len(self._actions))
         return len(self._actions) == 0
 
     def rollout(self):
-        current_board = copy.deepcopy(self.board)
-        winner = None
+        current_board: Board = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
             # TODO: implement heuristic-driven playout policy
             action = self.get_random_move(current_board)
+            # if action available, apply
             if action:
                 current_board.apply_action(action)
+                #print(current_board.render())
+            # if no action available, other player wins
             else:
-                winner = current_board.turn_color.opponent
-        return winner
+                print("winner: ", current_board.turn_color.opponent)
+                return current_board.turn_color.opponent
+        # game over but we still have moves => we win
+        print("winner: ", current_board.turn_color)
+        return current_board.turn_color
 
     def backpropagate(self, result):
         self._num_visits += 1
@@ -171,12 +174,17 @@ class MCTSNode:
             self.parent.backpropagate(result)
 
     def best_child(self, c_param=1.4):
-        best_score = -1
+        best_score: float = -1.0
         best_child = None
         for child in self.children:
-            exploit = child._results[1] / child._num_visits
-            explore = c_param * (2 * log(self._num_visits) / child._num_visits) ** 0.5
-            score = exploit + explore
+            if child._num_visits == 0:
+                exploit: float = child._results[1]
+                explore: float = 0.0
+            else:
+                exploit: float = child._results[1] / child._num_visits
+                explore: float = c_param * (2 * log(self._num_visits) / child._num_visits) ** 0.5
+            # TODO: fix dividing by zero causing complex numbers
+            score: float = exploit + explore
             if score > best_score:
                 best_score = score
                 best_child = child
@@ -185,7 +193,7 @@ class MCTSNode:
     def _tree_policy(self):
         current_node: MCTSNode | None = self
         # select nodes to expand
-        while current_node and current_node.is_terminal_node():
+        while current_node and not current_node.is_terminal_node():
             if not current_node.is_fully_expanded():
                 return current_node.expand()
             else:
@@ -201,37 +209,41 @@ class MCTSNode:
                 print("ERROR: No tree policy node found")
                 return None
             # simulation
+            print("simulating")
             reward = v.rollout()
             if not reward:
                 print("ERROR: No winner found")
                 return None
             # backpropagation
+            print("backpropagating")
             v.backpropagate(reward)
 
         # return best action
-        best_child = self.best_child(c_param=0.0)
+        best_child = self.best_child(c_param = 0.0) # c_param = 0.0
         if best_child:
             return best_child._parent_action
 
         # if no best child, print error + return None
         print("ERROR: No best child found")
         return None
-
+    
     def get_random_move(self, board) -> PlaceAction | None:
         state = board._state
-        coord = random.choice(get_valid_coords(state, board.turn_color))
-        action = None
         tetronimos = get_tetronimos(Coord(0, 0))
+        
+        coords = get_valid_coords(state, board.turn_color)
+        coord: Coord = random.choice(coords)
+        coords.remove(coord)
 
-        # if no valid moves, pick a new coord
+        # try all available coords
+        while get_valid_moves(state, tetronimos, coord) == []:
+            if coords:
+                coord = random.choice(coords)
+                coords.remove(coord)
+            else:
+                break
+        # if no valid moves available
         if get_valid_moves(state, tetronimos, coord) == []:
-            # try all available coords
-            for coord in get_valid_coords(state, board.turn_color):
-                if get_valid_moves(state, tetronimos, coord) != []:
-                    action = random.choice(
-                        get_valid_moves(state, tetronimos, coord)
-                    )
-                    break
-        else:
-            action = random.choice(get_valid_moves(state, tetronimos, coord))
-        return action
+            return None
+        # else return random valid move
+        return random.choice(get_valid_moves(state, tetronimos, coord))
