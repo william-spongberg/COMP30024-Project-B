@@ -4,7 +4,7 @@ from cmath import log
 from collections import defaultdict
 
 from agent_random.movements import valid_coords, valid_moves
-from agent_random.tetronimos import BOARD_N, make_tetronimos
+from agent_random.tetronimos import BOARD_N
 from referee.game.actions import PlaceAction
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
@@ -51,7 +51,7 @@ class MCTSNode:
         action = self.actions.pop()
         # print(action)
         board_node.apply_action(action)
-        #print(board_node)
+        # print(board_node)
         child_node: MCTSNode = MCTSNode(
             board_node.state, parent=self, parent_action=action
         )
@@ -164,24 +164,23 @@ class MCTSNode:
         Get a random move for the current state
         """
         state: dict[Coord, CellState] = board.state
-        tetronimos = make_tetronimos(Coord(0, 0))
 
         coords = valid_coords(state, board.turn_color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         # try all available coords
-        while not valid_moves(state, tetronimos, coord):
+        while not valid_moves(state, coord):
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if not valid_moves(state, tetronimos, coord):
+        if not valid_moves(state, coord):
             return None
         # else return random valid move
-        return random.choice(valid_moves(state, tetronimos, coord))
+        return random.choice(valid_moves(state, coord))
 
 
 def find_actions(
@@ -191,11 +190,22 @@ def find_actions(
     Find all possible valid actions for the current state
     """
     coords: list[Coord] = valid_coords(state, color)
-    tetronimos: list[PlaceAction] = make_tetronimos(Coord(0, 0))
     actions: list[PlaceAction] = []
     for coord in coords:
-        actions.extend(valid_moves(state, tetronimos, coord))
+        actions.extend(valid_moves(state, coord))
     return actions
+
+
+def has_actions(state: dict[Coord, CellState], color: PlayerColor) -> bool:
+    """
+    Check if there are any valid actions for the current state
+    """
+    coords: list[Coord] = valid_coords(state, color)
+
+    for coord in coords:
+        if valid_moves(state, coord):
+            return True
+    return False
 
 
 class SimBoard:
@@ -215,6 +225,7 @@ class SimBoard:
             self.state: dict[Coord, CellState] = state
         else:
             self.state: dict[Coord, CellState] = self.empty_state()
+        self.possible_actions: list[PlaceAction]
         self.turn_color: PlayerColor = color
         self.turn_count = 0
 
@@ -295,15 +306,15 @@ class SimBoard:
     def turn_limit_reached(self) -> bool:
         return self.turn_count >= MAX_TURNS
 
+    # TODO: incredibly inefficient, need to fix
     @property
     def game_over(self) -> bool:
         """
         The game is over if turn limit reached or no player can place any more pieces.
         """
         return self.turn_limit_reached or (
-            not find_actions(self.state, PlayerColor.RED)
-            and not find_actions(self.state, PlayerColor.BLUE)
+            not has_actions(self.state, PlayerColor.RED)
+            and not has_actions(self.state, PlayerColor.BLUE)
         )
-    
+
     # TODO: what happens on turn_limit_reached?
-    # TODO: fix opposite colour being reported winner
