@@ -24,15 +24,14 @@ class Agent:
     board: Board  # state of game
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
-    tetronimos: list[PlaceAction]  # list of all possible tetronimos
 
     def __init__(self, color: PlayerColor, **referee: dict):
         self.init(color)
         self.test_tetronimos()
 
     def action(self, **referee: dict) -> Action:
-        root = MCTSNode(self.board._state, self.color)
-        action = root.best_action(sim_no=5)
+        root = MCTSNode(state=self.board._state, color=self.color)
+        action = root.best_action(sim_no=50)
 
         if action:
             return action
@@ -40,12 +39,12 @@ class Agent:
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
+        print(self.board.render(True))
 
     def init(self, color: PlayerColor):
         self.board = Board()
         self.color = color
         self.name = "Agent_MCTS " + self.color.name
-        self.tetronimos = make_tetronimos(Coord(0, 0))
 
         match color:
             case PlayerColor.RED:
@@ -68,18 +67,18 @@ class Agent:
         coords.remove(coord)
 
         # try all available coords
-        while not valid_moves(self.board._state, self.tetronimos, coord):
+        while not valid_moves(self.board._state, coord):
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if not valid_moves(self.board._state, self.tetronimos, coord):
+        if not valid_moves(self.board._state, coord):
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
 
         # return random move
-        return random.choice(valid_moves(self.board._state, self.tetronimos, coord))
+        return random.choice(valid_moves(self.board._state, coord))
 
 
 class AgentMCTS:
@@ -95,5 +94,5 @@ class AgentMCTS:
         self.agent.update(color, action)
 
     @property
-    def colour(self):
+    def color(self):
         return self.agent.color
