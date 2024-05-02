@@ -15,11 +15,18 @@ def get_agents():
         agent_a = AgentRandom(PlayerColor.RED)
     elif sys.argv[1] == "agent_mcts":
         agent_a = AgentMCTS(PlayerColor.RED)
+    else :
+        print("agent not found")
+        sys.exit(1)
     
     if sys.argv[2] == "agent_random":
         agent_b = AgentRandom(PlayerColor.BLUE)
     elif sys.argv[2] == "agent_mcts":
         agent_b = AgentMCTS(PlayerColor.BLUE)
+    else :
+        print("agent not found")
+        sys.exit(1)
+        
     return agent_a, agent_b
 
 def play_game():
@@ -28,12 +35,18 @@ def play_game():
 
     # play game until over
     while not game_state.game_over:
-        # agent A turn
-        if game_state.turn_color == agent_a.colour:
+        # print("turn color:", game_state.turn_color)
+        # print("agent a color:", agent_a.color)
+        # print("agent b color:", agent_b.color)
+        
+        if game_state.turn_color == agent_a.color:
+            # agent A turn
             move = agent_a.action()
-        # agent B turn
+            print("agent a placed ", move)
         else:
+            # agent B turn
             move = agent_b.action()
+            print("agent b placed ", move)
 
         # apply move to game state
         game_state.apply_action(move)
@@ -43,7 +56,8 @@ def play_game():
         agent_b.update(game_state.turn_color, move)
 
     # print final game state
-    print(game_state.render())
+    print("final game state:")
+    print(game_state.render(True))
     print(game_state.winner_color, " wins")
 
 # profile the game
