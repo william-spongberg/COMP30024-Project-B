@@ -1,14 +1,17 @@
+from agent_random.tetronimos import make_tetronimos
 from referee.game import PlayerColor, Coord, PlaceAction, Direction
 from referee.game.board import Board, CellState
 
+# TODO: fix not all possible moves being generated
 
-def valid_moves(
-    state: dict[Coord, CellState], tetronimos: list[PlaceAction], coord: Coord
-) -> list[PlaceAction]:
+tetronimos = make_tetronimos(Coord(0, 0))
+
+
+def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction]:
     """
     Get valid PlaceActions from a given coordinate.
     """
-    return [move for move in get_moves(coord, tetronimos) if is_valid(state, move)]
+    return [move for move in get_moves(coord) if is_valid(state, move)]
 
 
 def valid_coords(
@@ -17,11 +20,11 @@ def valid_coords(
     """
     Get valid adjacent coordinates from all over the board.
     """
-    
+
     # if dict does not contain any player colour coords, return all coords
     if not any([cell.player == player_colour for cell in state.values()]):
         return list(state.keys())
-    
+
     # else if dict contains a player colour coord, return all adjacent coords
     return [
         adjacent
@@ -30,6 +33,8 @@ def valid_coords(
         for adjacent in [coord + dir for dir in Direction]
         if state[adjacent].player is None
     ]
+    # TODO: check if valid coords are surrounded (can't have pieces placed)
+    # avoids needing to check all 19 pieces
 
 
 def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
@@ -42,7 +47,7 @@ def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
     return True
 
 
-def get_moves(coord: Coord, tetronimos: list[PlaceAction]) -> list[PlaceAction]:
+def get_moves(coord: Coord) -> list[PlaceAction]:
     """
     Get all possible tetronimo moves from a given coordinate
     """
