@@ -13,6 +13,14 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction
     """
     return [move for move in get_moves(coord) if is_valid(state, move)]
 
+def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
+    """
+    Check if a player has any valid move.
+    """
+    for move in get_moves(coord):
+        if is_valid(state, move):
+            return True
+    return False
 
 def valid_coords(
     state: dict[Coord, CellState], player_colour: PlayerColor
@@ -55,3 +63,5 @@ def get_moves(coord: Coord) -> list[PlaceAction]:
         PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)])
         for tetronimo in tetronimos
     ]
+
+# TODO: make new get_valid_moves that does get_moves job but only adds valid tetronimos?

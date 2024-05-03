@@ -3,7 +3,7 @@ import random
 from cmath import log
 from collections import defaultdict
 
-from agent_random.movements import valid_coords, valid_moves
+from agent_random.movements import has_valid_move, valid_coords, valid_moves
 from agent_random.tetronimos import BOARD_N
 from referee.game.actions import PlaceAction
 from referee.game.board import CellState
@@ -116,6 +116,8 @@ class MCTSNode:
                 best_score = score
                 best_child = child
         return best_child
+    
+    # TODO: fix tree policy returning None - related to not finding all possible moves?
 
     def _tree_policy(self):
         """
@@ -153,6 +155,11 @@ class MCTSNode:
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:
+            temp_board = SimBoard(best_child.board.state, best_child.board.turn_color)
+            temp_board.apply_action(best_child.parent_action)
+            print("best action: ", best_child.parent_action)
+            # temp_board.turn_color = temp_board.turn_color.opponent
+            # print(temp_board.render(True))
             return best_child.parent_action
 
         # if no best child, print error + return None
@@ -196,14 +203,14 @@ def find_actions(
     return actions
 
 
-def has_actions(state: dict[Coord, CellState], color: PlayerColor) -> bool:
+def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """
-    Check if there are any valid actions for the current state
+    Check if there is any valid action for the current state
     """
     coords: list[Coord] = valid_coords(state, color)
 
     for coord in coords:
-        if valid_moves(state, coord):
+        if has_valid_move(state, coord):
             return True
     return False
 
@@ -240,29 +247,32 @@ class SimBoard:
             Coord(r, c): CellState() for r in range(BOARD_N) for c in range(BOARD_N)
         }
 
-    def apply_action(self, action: PlaceAction):
+    def apply_action(self, action: PlaceAction | None):
         """
         Apply the action to the current state
         """
+        if not action:
+            print("ERROR: No action given")
+            return
         for coord in action.coords:
             self.state[coord] = CellState(self.turn_color)
         self.turn_color = self.turn_color.opponent
         self.turn_count += 1
+
+    def apply_ansi(self, str, bold=True, color=None):
+        bold_code = "\033[1m" if bold else ""
+        color_code = ""
+        if color == "r":
+            color_code = "\033[31m"
+        if color == "b":
+            color_code = "\033[34m"
+        return f"{bold_code}{color_code}{str}\033[0m"
 
     def render(self, use_color: bool = False) -> str:
         """
         Returns a visualisation of the game board as a multiline string, with
         optional ANSI color codes and Unicode characters (if applicable).
         """
-
-        def apply_ansi(str, bold=True, color=None):
-            bold_code = "\033[1m" if bold else ""
-            color_code = ""
-            if color == "r":
-                color_code = "\033[31m"
-            if color == "b":
-                color_code = "\033[34m"
-            return f"{bold_code}{color_code}{str}\033[0m"
 
         output = ""
         for r in range(BOARD_N):
@@ -272,7 +282,7 @@ class SimBoard:
                     color = "r" if color == PlayerColor.RED else "b"
                     text = f"{color}"
                     if use_color:
-                        output += apply_ansi(text, color=color, bold=False)
+                        output += self.apply_ansi(str=text, bold=False, color=color)
                     else:
                         output += text
                 else:
@@ -306,15 +316,14 @@ class SimBoard:
     def turn_limit_reached(self) -> bool:
         return self.turn_count >= MAX_TURNS
 
-    # TODO: incredibly inefficient, need to fix
     @property
     def game_over(self) -> bool:
         """
         The game is over if turn limit reached or no player can place any more pieces.
         """
         return self.turn_limit_reached or (
-            not has_actions(self.state, PlayerColor.RED)
-            and not has_actions(self.state, PlayerColor.BLUE)
+            not has_action(self.state, PlayerColor.RED)
+            and not has_action(self.state, PlayerColor.BLUE)
         )
 
     # TODO: what happens on turn_limit_reached?
