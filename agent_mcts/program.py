@@ -39,7 +39,7 @@ class Agent:
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
-        print(self.board.render(True))
+        #print(self.board.render(True))
 
     def init(self, color: PlayerColor):
         self.board = Board()
