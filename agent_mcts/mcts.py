@@ -73,6 +73,7 @@ class MCTSNode:
         current_board: SimBoard = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
+            # TODO: wrong logic here, the num of actions change over the rollout, but fixing this causes really bad efficiency
             if len(self.actions) > 50:
                 action = self.get_random_move(current_board)
             else:
@@ -102,7 +103,7 @@ class MCTSNode:
         """
         Select the best child node based on the UCB1 formula
         """
-        best_score: float = -1.0
+        best_score: float = float("-inf")
         best_child = None
         for child in self.children:
             if child.num_visits == 0 or self.num_visits == 0:
@@ -199,20 +200,20 @@ class MCTSNode:
 
     def heuristic(self, move: PlaceAction, board: 'SimBoard'):
         current_board = copy.deepcopy(board)
-        # coords = valid_coords(current_board.state, current_board.turn_color)
-        # move_count = 0
-        # for coord in coords:
-        #     move_count += len(valid_moves(current_board.state, coord))
+        coords = valid_coords(current_board.state, current_board.turn_color)
+        move_count = 0
+        for coord in coords:
+            move_count += len(valid_moves(current_board.state, coord))
         current_board.apply_action(move)
         opp_coords = valid_coords(current_board.state, current_board.turn_color)
         opp_move_count = 0
         for coord in opp_coords:
             opp_move_count += len(valid_moves(current_board.state, coord))
-        return opp_move_count # smaller is better
+        return move_count - opp_move_count + len(coords) - len(opp_coords) # bigger is better
     
     def get_heuristic_based_move(self, board: 'SimBoard') -> PlaceAction | None:
         best_move = None
-        best_heuristic = float('inf')
+        best_heuristic = float('-inf')
         state = board.state
 
         coords = valid_coords(state, board.turn_color)
@@ -223,7 +224,7 @@ class MCTSNode:
             moves = valid_moves(state, coord)
             for move in moves:
                 heuristic = self.heuristic(move, board)
-                if heuristic < best_heuristic:
+                if heuristic > best_heuristic:
                     best_heuristic = heuristic
                     best_move = move
         return best_move
