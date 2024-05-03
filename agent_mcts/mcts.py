@@ -192,16 +192,20 @@ class MCTSNode:
 
     def heuristic(self, move: PlaceAction, board: 'SimBoard'):
         current_board = copy.deepcopy(board)
+        # coords = valid_coords(current_board.state, current_board.turn_color)
+        # move_count = 0
+        # for coord in coords:
+        #     move_count += len(valid_moves(current_board.state, coord))
         current_board.apply_action(move)
         opp_coords = valid_coords(current_board.state, current_board.turn_color)
         opp_move_count = 0
         for coord in opp_coords:
             opp_move_count += len(valid_moves(current_board.state, coord))
-        return len(self.children) - opp_move_count # bigger is better
+        return opp_move_count # smaller is better
     
     def get_heuristic_based_move(self, board: 'SimBoard') -> PlaceAction | None:
         best_move = None
-        best_heuristic = float('-inf')
+        best_heuristic = float('inf')
         state = board.state
 
         coords = valid_coords(state, board.turn_color)
@@ -212,7 +216,7 @@ class MCTSNode:
             moves = valid_moves(state, coord)
             for move in moves:
                 heuristic = self.heuristic(move, board)
-                if heuristic > best_heuristic:
+                if heuristic < best_heuristic:
                     best_heuristic = heuristic
                     best_move = move
         return best_move
