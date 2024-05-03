@@ -111,6 +111,11 @@ class MCTSNode:
             else:
                 exploit: float = child.results[1] / child.num_visits
                 # TODO: fix potential error here in abs causing bad results
+                if (self.num_visits) < 1 or (child.num_visits) < 1:
+                    print("ERROR: abnormal num_visits")
+                    print("num_visits: ", self.num_visits)
+                    print("child.num_visits: ", child.num_visits)
+                    exit()
                 explore: float = (
                     c_param * abs(2 * log(self.num_visits) / child.num_visits) ** 0.5
                 )
