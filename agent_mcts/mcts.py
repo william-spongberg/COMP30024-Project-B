@@ -73,7 +73,10 @@ class MCTSNode:
         current_board: SimBoard = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
-            action = self.get_random_move(current_board)
+            if len(self._actions) > 50:
+                action = self.get_random_move(current_board)
+            else:
+                action = self.get_heuristic_based_move(current_board)
             # if action available, apply
             if action:
                 current_board.apply_action(action)
@@ -182,6 +185,34 @@ class MCTSNode:
         # else return random valid move
         return random.choice(valid_moves(state, coord))
 
+    def heuristic(self, move: PlaceAction, board: Board):
+        current_board = copy.deepcopy(board)
+        current_board.apply_action(move)
+        opp_coords = get_valid_coords(current_board._state, current_board.turn_color)
+        opp_move_count = 0
+        for coord in opp_coords:
+            opp_move_count += len(get_valid_moves(current_board._state, get_tetronimos(Coord(0, 0)), coord))
+        return len(self.children) - opp_move_count # bigger is better
+    
+    def get_heuristic_based_move(self, board: Board) -> PlaceAction | None:
+        best_move = None
+        best_heuristic = float('-inf')
+        state = board._state
+        tetronimos = get_tetronimos(Coord(0, 0))
+
+        coords = get_valid_coords(state, board.turn_color)
+        coord: Coord = random.choice(coords)
+        coords.remove(coord)
+
+        for coord in coords:
+            moves = get_valid_moves(state, tetronimos, coord)
+            for move in moves:
+                heuristic = self.heuristic(move, board)
+                if heuristic > best_heuristic:
+                    best_heuristic = heuristic
+                    best_move = move
+        return best_move
+
 
 def find_actions(
     state: dict[Coord, CellState], color: PlayerColor
@@ -206,7 +237,6 @@ def has_actions(state: dict[Coord, CellState], color: PlayerColor) -> bool:
         if valid_moves(state, coord):
             return True
     return False
-
 
 class SimBoard:
     """
