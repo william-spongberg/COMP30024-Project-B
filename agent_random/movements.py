@@ -2,25 +2,20 @@ from agent_random.tetronimos import make_tetronimos
 from referee.game import PlayerColor, Coord, PlaceAction, Direction
 from referee.game.board import Board, CellState
 
-# TODO: fix not all possible moves being generated
+# TODO: fix not all possible moves being generated?
 
 tetronimos = make_tetronimos(Coord(0, 0))
 
 
-def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction]:
+def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
     """
-    Get valid PlaceActions from a given coordinate.
+    Check if the piece can be placed on the board.
     """
-    # TODO: remove unnecessary function? now does the same as get_valid_pieces
-    return [move for move in get_valid_pieces(state, coord)]
+    for coord in piece.coords:
+        if state[coord].player is not None:
+            return False
+    return True
 
-def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
-    """
-    Check if a player has any valid move.
-    """
-    if get_valid_pieces(state, coord):
-        return True
-    return False
 
 def valid_coords(
     state: dict[Coord, CellState], player_colour: PlayerColor
@@ -45,17 +40,7 @@ def valid_coords(
     # avoids needing to check all 19 pieces
 
 
-def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
-    """
-    Check if the piece can be placed on the board.
-    """
-    for coord in piece.coords:
-        if state[coord].player is not None:
-            return False
-    return True
-
-
-def get_pieces(coord: Coord) -> list[PlaceAction]:
+def moves_at_coord(coord: Coord) -> list[PlaceAction]:
     """
     Get all possible tetronimo at a given coordinate.
     """
@@ -64,7 +49,8 @@ def get_pieces(coord: Coord) -> list[PlaceAction]:
         for tetronimo in tetronimos
     ]
 
-def get_valid_pieces(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction]:
+
+def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction]:
     """
     Get all possible tetronimo at a given coordinate.
     """
@@ -73,3 +59,17 @@ def get_valid_pieces(state: dict[Coord, CellState], coord: Coord) -> list[PlaceA
         for tetronimo in tetronimos
         if is_valid(state, tetronimo)
     ]
+
+
+def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
+    """
+    Check if a player has any valid piece.
+    """
+    for tetronimo in tetronimos:
+        if is_valid(
+            state,
+            PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)]),
+        ):
+            return True
+
+    return False
