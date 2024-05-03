@@ -84,13 +84,13 @@ class Agent:
 class AgentMCTS:
     # wrap Agent class
 
-    def __init__(self, color: PlayerColor, **referee: dict):
+    def __init__(self, color: PlayerColor):
         self.agent = Agent(color)
 
-    def action(self, **referee: dict) -> Action:
+    def action(self) -> Action:
         return self.agent.action()
 
-    def update(self, color: PlayerColor, action: Action, **referee: dict):
+    def update(self, color: PlayerColor, action: Action):
         self.agent.update(color, action)
 
     @property
