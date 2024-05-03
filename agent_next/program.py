@@ -185,16 +185,16 @@ class Agent:
         coords.remove(coord)
 
         # try all available coords
-        while valid_moves(self.game_state, self.tetronimos, coord) == []:
+        while valid_moves(self.game_state, coord) == []:
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if valid_moves(self.game_state, self.tetronimos, coord) == []:
+        if valid_moves(self.game_state,  coord) == []:
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
-        return random.choice(valid_moves(self.game_state, self.tetronimos, coord))
+        return random.choice(valid_moves(self.game_state, coord))
 
     def file_log_handler(self, message: str):
         self.sim_logs.append(message)

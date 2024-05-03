@@ -73,7 +73,10 @@ class MCTSNode:
         current_board: SimBoard = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
-            action = self.get_random_move(current_board)
+            if len(self.actions) > 50:
+                action = self.get_random_move(current_board)
+            else:
+                action = self.get_heuristic_based_move(current_board)
             # if action available, apply
             if action:
                 current_board.apply_action(action)
@@ -108,6 +111,11 @@ class MCTSNode:
             else:
                 exploit: float = child.results[1] / child.num_visits
                 # TODO: fix potential error here in abs causing bad results
+                if (self.num_visits) < 1 or (child.num_visits) < 1:
+                    print("ERROR: abnormal num_visits")
+                    print("num_visits: ", self.num_visits)
+                    print("child.num_visits: ", child.num_visits)
+                    exit()
                 explore: float = (
                     c_param * abs(2 * log(self.num_visits) / child.num_visits) ** 0.5
                 )
@@ -189,6 +197,37 @@ class MCTSNode:
         # else return random valid move
         return random.choice(valid_moves(state, coord))
 
+    def heuristic(self, move: PlaceAction, board: 'SimBoard'):
+        current_board = copy.deepcopy(board)
+        # coords = valid_coords(current_board.state, current_board.turn_color)
+        # move_count = 0
+        # for coord in coords:
+        #     move_count += len(valid_moves(current_board.state, coord))
+        current_board.apply_action(move)
+        opp_coords = valid_coords(current_board.state, current_board.turn_color)
+        opp_move_count = 0
+        for coord in opp_coords:
+            opp_move_count += len(valid_moves(current_board.state, coord))
+        return opp_move_count # smaller is better
+    
+    def get_heuristic_based_move(self, board: 'SimBoard') -> PlaceAction | None:
+        best_move = None
+        best_heuristic = float('inf')
+        state = board.state
+
+        coords = valid_coords(state, board.turn_color)
+        coord: Coord = random.choice(coords)
+        coords.remove(coord)
+
+        for coord in coords:
+            moves = valid_moves(state, coord)
+            for move in moves:
+                heuristic = self.heuristic(move, board)
+                if heuristic < best_heuristic:
+                    best_heuristic = heuristic
+                    best_move = move
+        return best_move
+
 
 def find_actions(
     state: dict[Coord, CellState], color: PlayerColor
@@ -213,7 +252,6 @@ def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
         if has_valid_move(state, coord):
             return True
     return False
-
 
 class SimBoard:
     """
