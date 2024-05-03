@@ -11,9 +11,11 @@ from referee.game.constants import MAX_TURNS
 from referee.game.coord import Coord
 from referee.game.player import PlayerColor
 
-# TODO: make more efficient
-# TODO: implement heuristic-driven playout policy
-
+# generally want to make more efficient (want at least 100 sims per move)
+# TODO: save possible moves for each board state
+# TODO: implement asynchronous MCTS to allow searching to continue while waiting for opponent move
+# TODO: remove as many checks as possible to increase efficiency
+# TODO: add transposition table to store board states and results, avoids re-searching same states
 
 class MCTSNode:
     """
