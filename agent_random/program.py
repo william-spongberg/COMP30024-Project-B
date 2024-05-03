@@ -4,7 +4,6 @@
 import random
 
 from agent_random.movements import valid_moves, valid_coords
-from agent_random.tetronimos import make_tetronimos
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from referee.game.board import Board
 
