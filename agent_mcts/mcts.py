@@ -73,7 +73,7 @@ class MCTSNode:
         current_board: SimBoard = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
-            if len(self._actions) > 50:
+            if len(self.actions) > 50:
                 action = self.get_random_move(current_board)
             else:
                 action = self.get_heuristic_based_move(current_board)
@@ -185,27 +185,26 @@ class MCTSNode:
         # else return random valid move
         return random.choice(valid_moves(state, coord))
 
-    def heuristic(self, move: PlaceAction, board: Board):
+    def heuristic(self, move: PlaceAction, board: 'SimBoard'):
         current_board = copy.deepcopy(board)
         current_board.apply_action(move)
-        opp_coords = get_valid_coords(current_board._state, current_board.turn_color)
+        opp_coords = valid_coords(current_board.state, current_board.turn_color)
         opp_move_count = 0
         for coord in opp_coords:
-            opp_move_count += len(get_valid_moves(current_board._state, get_tetronimos(Coord(0, 0)), coord))
+            opp_move_count += len(valid_moves(current_board.state, coord))
         return len(self.children) - opp_move_count # bigger is better
     
-    def get_heuristic_based_move(self, board: Board) -> PlaceAction | None:
+    def get_heuristic_based_move(self, board: 'SimBoard') -> PlaceAction | None:
         best_move = None
         best_heuristic = float('-inf')
-        state = board._state
-        tetronimos = get_tetronimos(Coord(0, 0))
+        state = board.state
 
-        coords = get_valid_coords(state, board.turn_color)
+        coords = valid_coords(state, board.turn_color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         for coord in coords:
-            moves = get_valid_moves(state, tetronimos, coord)
+            moves = valid_moves(state, coord)
             for move in moves:
                 heuristic = self.heuristic(move, board)
                 if heuristic > best_heuristic:
