@@ -11,15 +11,15 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction
     """
     Get valid PlaceActions from a given coordinate.
     """
-    return [move for move in get_moves(coord) if is_valid(state, move)]
+    # TODO: remove unnecessary function? now does the same as get_valid_pieces
+    return [move for move in get_valid_pieces(state, coord)]
 
 def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
     """
     Check if a player has any valid move.
     """
-    for move in get_moves(coord):
-        if is_valid(state, move):
-            return True
+    if get_valid_pieces(state, coord):
+        return True
     return False
 
 def valid_coords(
@@ -55,13 +55,21 @@ def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
     return True
 
 
-def get_moves(coord: Coord) -> list[PlaceAction]:
+def get_pieces(coord: Coord) -> list[PlaceAction]:
     """
-    Get all possible tetronimo moves from a given coordinate
+    Get all possible tetronimo at a given coordinate.
     """
     return [
         PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)])
         for tetronimo in tetronimos
     ]
 
-# TODO: make new get_valid_moves that does get_moves job but only adds valid tetronimos?
+def get_valid_pieces(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction]:
+    """
+    Get all possible tetronimo at a given coordinate.
+    """
+    return [
+        PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)])
+        for tetronimo in tetronimos
+        if is_valid(state, tetronimo)
+    ]
