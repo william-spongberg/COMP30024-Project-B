@@ -166,9 +166,9 @@ class MCTSNode:
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:
-            temp_board = SimBoard(best_child.board.state, best_child.board.turn_color)
-            temp_board.apply_action(best_child.parent_action)
             print("best action: ", best_child.parent_action)
+            #temp_board = SimBoard(best_child.board.state, best_child.board.turn_color)
+            #temp_board.apply_action(best_child.parent_action)
             # temp_board.turn_color = temp_board.turn_color.opponent
             # print(temp_board.render(True))
             return best_child.parent_action
