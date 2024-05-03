@@ -34,19 +34,15 @@ def play_game():
     game_state: Board = Board()
 
     # play game until over
-    while not game_state.game_over:
-        # print("turn color:", game_state.turn_color)
-        # print("agent a color:", agent_a.color)
-        # print("agent b color:", agent_b.color)
-        
+    while not game_state.game_over:        
         if game_state.turn_color == agent_a.color:
             # agent A turn
             move = agent_a.action()
-            print("agent a placed ", move)
+            print(f"agent {agent_a.color} placed ", move)
         else:
             # agent B turn
             move = agent_b.action()
-            print("agent b placed ", move)
+            print(f"agent {agent_b.color} placed ", move)
 
         # apply move to game state
         game_state.apply_action(move)
@@ -62,4 +58,3 @@ def play_game():
 
 # profile the game
 play_game()
-#cProfile.run('play_game()')
