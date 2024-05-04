@@ -25,6 +25,8 @@ class Agent:
     board: SimBoard  # state of game
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
+    
+    current_root: MCTSNode  # current root node of MCTS tree
 
     def __init__(self, color: PlayerColor, **referee: dict):
         self.init(color)
