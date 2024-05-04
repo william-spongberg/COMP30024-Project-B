@@ -3,6 +3,7 @@ import sys
 
 from agent_mcts.program import AgentMCTS
 from agent_random.program import AgentRandom
+from helpers.sim_board import SimBoard
 from referee.game.board import Board
 from referee.game.player import PlayerColor
 
@@ -33,7 +34,7 @@ def get_agents():
 
 def play_game():
     agent_r, agent_b = get_agents()
-    game_state: Board = Board()
+    game_state: SimBoard = SimBoard()
 
     # play game until over
     while not game_state.game_over:
@@ -59,7 +60,7 @@ def play_game():
     # print final game state
     print("final game state:")
     print(game_state.render(True))
-    print(game_state.winner_color, " wins")
+    print(game_state.turn_color.opponent, " wins")
 
 
 # profile the game
