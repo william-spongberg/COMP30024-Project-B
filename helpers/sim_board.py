@@ -166,5 +166,17 @@ class SimBoard:
         The game is over if turn limit reached or one of the player cannot place any more pieces.
         """
         return self.turn_limit_reached or not has_action(self._state, PlayerColor.RED) or not has_action(self._state, PlayerColor.BLUE)
+    
+    @property
+    def winner(self) -> PlayerColor | None:
+        if not self.game_over:
+            return None
+        if not has_action(self._state, PlayerColor.RED):
+            return PlayerColor.BLUE
+        if not has_action(self._state, PlayerColor.BLUE):
+            return PlayerColor.RED
+        if self.turn_limit_reached:
+            return (PlayerColor.RED if self._player_token_count(PlayerColor.RED) > 
+                    self._player_token_count(PlayerColor.BLUE) else PlayerColor.BLUE)
 
     # TODO: what happens on turn_limit_reached?
