@@ -6,7 +6,7 @@ import random
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
 from helpers.movements import valid_coords, valid_moves
-from helpers.tetrominoes import make_tetrominos
+from helpers.tetrominoes import make_tetrominoes
 from referee.game import (
     PlayerColor,
     Action,
@@ -31,7 +31,7 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         root = MCTSNode(state=self.board._state, color=self.color)
-        action = root.best_action(sim_no=50)
+        action = root.best_action(sim_no=1)
 
         if action:
             return action
@@ -51,7 +51,7 @@ class Agent:
 
     def test_tetronimos(self):
         with open("tetronimos_test.txt", "w", encoding="utf-8") as f:
-            for tetromino in make_tetrominos(Coord(5, 5)):
+            for tetromino in make_tetrominoes(Coord(5, 5)):
                 board = Board()
                 board.apply_action(tetromino)
                 print(board.render(), file=f)

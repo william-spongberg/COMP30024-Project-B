@@ -201,6 +201,7 @@ class MCTSNode:
         return random.choice(valid_moves(state, coord))
 
     def heuristic(self, move: PlaceAction, board: SimBoard):
+        # TODO: copy state instead of whole board for better efficiency
         current_board = copy.deepcopy(board)
         coords = valid_coords(current_board._state, current_board._turn_color)
         move_count = 0
