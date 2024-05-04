@@ -28,7 +28,7 @@ class Agent:
         self.board.apply_action(action)
 
     def init(self, color: PlayerColor):
-        self.board = SimBoard(init_color=color)
+        self.board = SimBoard()
         self.color = color
         self.name = "Agent_Random " + self.color.name
         self.opponent = self.color.opponent
