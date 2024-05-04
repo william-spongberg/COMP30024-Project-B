@@ -63,8 +63,13 @@ class SimBoard:
         if not action:
             print("ERROR: No action given")
             return
+        lines_to_clear : set[Coord] = set()
         for coord in action.coords:
             self._state[coord] = CellState(self._turn_color)
+            lines_to_clear.update(self._row_occupied(coord))
+            lines_to_clear.update(self._col_occupied(coord))
+        for coord in lines_to_clear:
+            self._state[coord] = CellState(None)
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
 
@@ -111,6 +116,18 @@ class SimBoard:
 
     def _cell_empty(self, coord: Coord) -> bool:
         return self._state[coord].player == None
+    
+    def _row_occupied(self, coord: Coord) -> list[Coord]:
+        if all(self._cell_occupied(Coord(coord.r, c)) for c in range(BOARD_N)):
+            return [Coord(coord.r, c) for c in range(BOARD_N)]
+        else:
+            return []
+    
+    def _col_occupied(self, coord: Coord) -> list[Coord]:
+        if all(self._cell_occupied(Coord(r, coord.c)) for r in range(BOARD_N)):
+            return [Coord(r, coord.c) for r in range(BOARD_N)]
+        else:
+            return []
 
     def _player_token_count(self, color: PlayerColor) -> int:
         return sum(1 for cell in self._state.values() if cell.player == color)
@@ -146,11 +163,8 @@ class SimBoard:
     @property
     def game_over(self) -> bool:
         """
-        The game is over if turn limit reached or no player can place any more pieces.
+        The game is over if turn limit reached or one of the player cannot place any more pieces.
         """
-        return self.turn_limit_reached or (
-            not has_action(self._state, PlayerColor.RED)
-            and not has_action(self._state, PlayerColor.BLUE)
-        )
+        return self.turn_limit_reached or not has_action(self._state, PlayerColor.RED) or not has_action(self._state, PlayerColor.BLUE)
 
     # TODO: what happens on turn_limit_reached?
