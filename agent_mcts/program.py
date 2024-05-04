@@ -6,7 +6,7 @@ import random
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
 from helpers.movements import valid_coords, valid_moves
-from helpers.tetrominos import make_tetrominos
+from helpers.tetrominoes import make_tetrominos
 from referee.game import (
     PlayerColor,
     Action,

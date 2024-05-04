@@ -7,7 +7,7 @@ import copy
 import random
 from typing import AsyncGenerator
 from helpers.movements import valid_moves, valid_coords
-from helpers.tetrominos import make_tetrominos
+from helpers.tetrominoes import make_tetrominos
 from referee.agent.client import RemoteProcessClassClient
 from referee.game import (
     BoardUpdate,
@@ -49,7 +49,7 @@ class Agent:
     # attributes
     game_board: Board  # to keep track of game
     game_state: dict[Coord, CellState]  # to try different moves
-    tetrominos: list[PlaceAction]  # list of all possible tetrominos
+    tetrominoes: list[PlaceAction]  # list of all possible tetrominoes
     opponent: PlayerColor  # to keep track of opponent
     sim_logs: list[str]  # to keep track of simulation results
     sim_commentary: list[str]  # to keep track of simulation commentary
@@ -62,14 +62,14 @@ class Agent:
         """
         self.game_board = Board()
         self.game_state = self.game_board._state
-        self.tetrominos = make_tetrominos(Coord(0, 0))
+        self.tetrominoes = make_tetrominos(Coord(0, 0))
         self._color = color
         self.name = "Agent_Next " + self._color.name
         self.sim_logs = []
         self.sim_commentary = []
         self.sim_game_num = 0
 
-        # test tetrominos
+        # test tetrominoes
         with open("tetronimos_test.txt", "w") as f:
             for tetromino in make_tetrominos(Coord(5, 5)):
                 board = Board()

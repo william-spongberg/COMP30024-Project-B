@@ -50,20 +50,16 @@ class Agent:
         # if no valid moves available
         if not valid_moves(self.board.state, coord):
             return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
-        
-        # *DEBUGGING* valid moves not working correctly, invalid moves being generated
-        print(f"valid moves at coord {coord}:")
-        for move in valid_moves(self.board.state, coord): # type: ignore
+
+        # prints to track valid moves generated
+        print(
+            f"generated {len(valid_moves(self.board.state, coord))} valid moves at {coord}"
+        )
+        for move in valid_moves(self.board.state, coord):
             print(move)
-            temp_board = copy.deepcopy(self.board)
-            temp_board.apply_action(move)
-            #print(temp_board.render(True))
-        print("board colour: ", self.board.turn_color)
-        print(f"generated {len(valid_moves(self.board.state, coord))} valid moves at {coord}") # type: ignore
-            
 
         # return random move
-        return random.choice(valid_moves(self.board.state, coord)) # type: ignore
+        return random.choice(valid_moves(self.board.state, coord))
 
 
 class AgentRandom:
