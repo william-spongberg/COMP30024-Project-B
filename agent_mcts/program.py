@@ -5,8 +5,8 @@ import random
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
-from agent_random.movements import valid_coords, valid_moves
-from agent_random.tetronimos import make_tetronimos
+from helpers.movements import valid_coords, valid_moves
+from helpers.tetronimos import make_tetronimos
 from referee.game import (
     PlayerColor,
     Action,
@@ -45,12 +45,7 @@ class Agent:
         self.board = Board()
         self.color = color
         self.name = "Agent_MCTS " + self.color.name
-
-        match color:
-            case PlayerColor.RED:
-                self.opponent = PlayerColor.BLUE
-            case PlayerColor.BLUE:
-                self.opponent = PlayerColor.RED
+        self.opponent = self.color.opponent
 
         print(f"{self.name} *initiated*: {self.color}")
 

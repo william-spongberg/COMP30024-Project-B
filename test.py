@@ -30,25 +30,28 @@ def get_agents():
     return agent_a, agent_b
 
 def play_game():
-    agent_a, agent_b = get_agents()
+    agent_r, agent_b = get_agents()
     game_state: Board = Board()
 
     # play game until over
     while not game_state.game_over:        
-        if game_state.turn_color == agent_a.color:
+        if game_state.turn_color == agent_r.color:
             # agent A turn
-            move = agent_a.action()
-            print(f"agent {agent_a.color} placed ", move)
+            move = agent_r.action()
+            print(f"agent {agent_r.color} placed ", move)
+            #print(game_state.render(True))
         else:
             # agent B turn
             move = agent_b.action()
             print(f"agent {agent_b.color} placed ", move)
+            #print(game_state.render(True))
 
         # apply move to game state
         game_state.apply_action(move)
+        print(game_state.render(True))
         
         # update agents
-        agent_a.update(game_state.turn_color, move)
+        agent_r.update(game_state.turn_color, move)
         agent_b.update(game_state.turn_color, move)
 
     # print final game state
