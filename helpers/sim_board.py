@@ -1,6 +1,6 @@
 
-from helpers.heuristics import BOARD_N
-from helpers.movements import has_valid_move, valid_coords, valid_moves
+from .heuristics import BOARD_N
+from .movements import has_valid_move, valid_coords, valid_moves
 from referee.game.actions import PlaceAction
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS

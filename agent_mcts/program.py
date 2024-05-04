@@ -6,7 +6,7 @@ import random
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
 from helpers.movements import valid_coords, valid_moves
-from helpers.tetronimos import make_tetronimos
+from helpers.tetrominos import make_tetrominos
 from referee.game import (
     PlayerColor,
     Action,
@@ -51,7 +51,7 @@ class Agent:
 
     def test_tetronimos(self):
         with open("tetronimos_test.txt", "w", encoding="utf-8") as f:
-            for tetronimo in make_tetronimos(Coord(5, 5)):
+            for tetronimo in make_tetrominos(Coord(5, 5)):
                 board = Board()
                 board.apply_action(tetronimo)
                 print(board.render(), file=f)
