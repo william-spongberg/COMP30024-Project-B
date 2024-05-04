@@ -1,10 +1,10 @@
-from .tetrominoes import make_tetrominos
+from .tetrominoes import make_tetrominoes
 from referee.game import PlayerColor, Coord, PlaceAction, Direction
 from referee.game.board import Board, CellState
 
 # TODO: fix not all possible moves being generated?
 
-tetrominoes = make_tetrominos(Coord(0, 0))
+tetrominoes = make_tetrominoes(Coord(0, 0))
 
 
 def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
@@ -45,7 +45,7 @@ def moves_at_coord(coord: Coord) -> list[PlaceAction]:
     Get all possible tetrominoes at a given coordinate.
     """
     return [
-        PlaceAction(*[coord + Coord(x, y) for x, y in list(tetromino.coords)])
+        PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords])
         for tetromino in tetrominoes
     ]
 
@@ -54,12 +54,8 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction
     """
     Get all possible valid tetrominoes at a given coordinate for a given state.
     """
-    moves: list[PlaceAction] = []
-    for tetromino in tetrominoes:
-        move = PlaceAction(*[coord + Coord(x, y) for x, y in list(tetromino.coords)])
-        if is_valid(state, move):
-            moves.append(move)
-    return moves
+    return [PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords]) 
+            for tetromino in tetrominoes if is_valid(state, PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords]))]
 
 
 def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
@@ -69,7 +65,7 @@ def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
     for tetromino in tetrominoes:
         if is_valid(
             state,
-            PlaceAction(*[coord + Coord(x, y) for x, y in list(tetromino.coords)]),
+            PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords]),
         ):
             return True
 
