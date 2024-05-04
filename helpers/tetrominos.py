@@ -27,9 +27,9 @@ def make_tetrominos(coord: Coord) -> list[PlaceAction]:
 
 def test_tetronimos():
     with open("tetronimos_test.txt", "w") as f:
-        print("testing tetronimos")
+        print("testing tetronimos", file=f)
         for tetromino in make_tetrominos(Coord(5, 5)):
             board = Board()
             board.apply_action(tetromino)
             print(board.render(), file=f)
-        print("num tetronimos:", len(make_tetrominos(Coord(5, 5))))
+        print("num tetronimos:", len(make_tetrominos(Coord(5, 5))), file=f)
