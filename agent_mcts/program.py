@@ -6,6 +6,7 @@ import random
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
 from helpers.movements import valid_coords, valid_moves
+from helpers.sim_board import SimBoard
 from helpers.tetrominoes import make_tetrominoes
 from referee.game import (
     PlayerColor,
@@ -21,7 +22,7 @@ from referee.game.board import Board
 class Agent:
 
     # attributes
-    board: Board  # state of game
+    board: SimBoard  # state of game
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
 
@@ -31,7 +32,7 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         root = MCTSNode(state=self.board._state, color=self.color)
-        action = root.best_action(sim_no=1)
+        action = root.best_action(sim_no=10)
 
         if action:
             return action
@@ -42,7 +43,7 @@ class Agent:
         #print(self.board.render(True))
 
     def init(self, color: PlayerColor):
-        self.board = Board()
+        self.board = SimBoard()
         self.color = color
         self.name = "Agent_MCTS " + self.color.name
         self.opponent = self.color.opponent
