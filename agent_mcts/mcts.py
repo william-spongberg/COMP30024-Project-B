@@ -2,6 +2,7 @@ import copy
 import random
 from cmath import log
 from collections import defaultdict
+import warnings
 
 from helpers.movements import valid_coords, valid_moves
 from helpers.sim_board import SimBoard, find_actions
@@ -68,29 +69,32 @@ class MCTSNode:
         # print(len(self.actions))
         return len(self.actions) == 0
 
-    def rollout(self):
+    def rollout(self) -> PlayerColor | None:
         """
         Simulate a random v random game from the current node
         """
         current_board: SimBoard = copy.deepcopy(self.board)
         while not current_board.game_over:
             # light playout policy
+            """ 
             # TODO: wrong logic here, the num of actions change over the rollout, but fixing this causes really bad efficiency
-            if len(self.actions) > 50:
-                action = self.get_random_move(current_board)
-            else:
-                action = self.get_heuristic_based_move(current_board)
+            # But better to develop consist tree first, heuristics are bad in efficiency generally
+            # if len(self.actions) > 50:
+            #     action = self.get_random_move(current_board)
+            # else:
+            #     action = self.get_heuristic_based_move(current_board)
+            """
+            action = self.get_random_move(current_board)
             # if action available, apply
             if action:
                 current_board.apply_action(action)
                 # print(current_board.render())
-            # if no action available, other player wins
+            # if no action available, should not be in this loop (but anyway return opponent as winner)
             else:
-                # print("winner: ", current_board.turn_color.opponent)
+                warnings.warn("ERROR: No action available in rollout but not game over yet")
                 return current_board._turn_color.opponent
-        # game over but we still have moves => we win
-        # print("winner: ", current_board.turn_color)
-        return current_board._turn_color
+        
+        return current_board.winner
 
     def backpropagate(self, result):
         """
@@ -129,7 +133,7 @@ class MCTSNode:
         return best_child
 
     # TODO: fix tree policy returning None - related to not finding all possible moves?
-
+    # probably fixed already by completing tetrinomos
     def _tree_policy(self):
         """
         Select a node to expand based on the tree policy
