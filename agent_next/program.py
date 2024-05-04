@@ -71,9 +71,9 @@ class Agent:
 
         # test tetrominos
         with open("tetronimos_test.txt", "w") as f:
-            for tetronimo in make_tetrominos(Coord(5, 5)):
+            for tetromino in make_tetrominos(Coord(5, 5)):
                 board = Board()
-                board.apply_action(tetronimo)
+                board.apply_action(tetromino)
                 print(board.render(), file=f)
 
         # announce agent

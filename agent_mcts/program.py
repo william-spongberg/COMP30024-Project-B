@@ -51,9 +51,9 @@ class Agent:
 
     def test_tetronimos(self):
         with open("tetronimos_test.txt", "w", encoding="utf-8") as f:
-            for tetronimo in make_tetrominos(Coord(5, 5)):
+            for tetromino in make_tetrominos(Coord(5, 5)):
                 board = Board()
-                board.apply_action(tetronimo)
+                board.apply_action(tetromino)
                 print(board.render(), file=f)
 
     def random_move(self) -> PlaceAction:

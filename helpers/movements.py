@@ -45,8 +45,8 @@ def moves_at_coord(coord: Coord) -> list[PlaceAction]:
     Get all possible tetrominos at a given coordinate.
     """
     return [
-        PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)])
-        for tetronimo in tetrominos
+        PlaceAction(*[coord + Coord(x, y) for x, y in list(tetromino.coords)])
+        for tetromino in tetrominos
     ]
 
 
@@ -55,8 +55,8 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction
     Get all possible valid tetrominos at a given coordinate for a given state.
     """
     moves: list[PlaceAction] = []
-    for tetronimo in tetrominos:
-        move = PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)])
+    for tetromino in tetrominos:
+        move = PlaceAction(*[coord + Coord(x, y) for x, y in list(tetromino.coords)])
         if is_valid(state, move):
             moves.append(move)
     return moves
@@ -66,10 +66,10 @@ def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
     """
     Check there is at least one valid move available.
     """
-    for tetronimo in tetrominos:
+    for tetromino in tetrominos:
         if is_valid(
             state,
-            PlaceAction(*[coord + Coord(x, y) for x, y in list(tetronimo.coords)]),
+            PlaceAction(*[coord + Coord(x, y) for x, y in list(tetromino.coords)]),
         ):
             return True
 
