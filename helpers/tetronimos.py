@@ -1,3 +1,4 @@
+from helpers.sim_board import SimBoard
 from referee.game import PlaceAction, Coord
 from referee.game.pieces import create_piece, PieceType
 
@@ -22,3 +23,10 @@ def make_tetronimos(coord: Coord) -> list[PlaceAction]:
     for i, tetronimo in enumerate(tetronimos):
         tetronimos[i] = PlaceAction(*tetronimo.coords)
     return tetronimos
+
+def test_tetronimos():
+    with open("tetronimos_test.txt", "w") as f:
+        for tetronimo in make_tetronimos(Coord(5, 5)):
+            board = SimBoard()
+            board.apply_action(tetronimo)
+            print(board, file=f)

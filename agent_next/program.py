@@ -2,15 +2,12 @@
 # Project Part B: Game Playing Agent
 
 import asyncio
-from cmath import log
 from collections import defaultdict
 import copy
 import random
 from typing import AsyncGenerator
-from webbrowser import get
-from agent_random import tetronimos
-from agent_random.movements import valid_moves, valid_coords
-from agent_random.tetronimos import make_tetronimos
+from helpers.movements import valid_moves, valid_coords
+from helpers.tetronimos import make_tetronimos
 from referee.agent.client import RemoteProcessClassClient
 from referee.game import (
     BoardUpdate,
