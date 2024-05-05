@@ -148,8 +148,8 @@ class MCTSNode:
                 best_child = child
         return best_child
 
-    # TODO: fix tree policy returning None - related to not finding all possible moves?
-    # probably fixed already by completing tetrinomos
+    # TODO: implement iterative deepening to allow for more efficient search
+    # return winner as whoever has more pieces on board (for now - in future, use heuristic)
     def _tree_policy(self):
         """
         Select a node to expand based on the tree policy
