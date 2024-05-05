@@ -1,4 +1,3 @@
-
 from .heuristics import BOARD_N
 from .movements import has_valid_move, valid_coords, valid_moves
 from referee.game.actions import PlaceAction
@@ -6,6 +5,7 @@ from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
 from referee.game.coord import Coord
 from referee.game.player import PlayerColor
+
 
 def find_actions(
     state: dict[Coord, CellState], color: PlayerColor
@@ -35,6 +35,7 @@ def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
 def empty_state() -> dict[Coord, CellState]:
     return {Coord(r, c): CellState() for r in range(BOARD_N) for c in range(BOARD_N)}
 
+
 class SimBoard:
     """
     Light weight adaptation of the Board class
@@ -53,9 +54,6 @@ class SimBoard:
         self._turn_count: int = 0
         self._actions: list[PlaceAction]
 
-        # self._history: list[BoardMutation] = []
-        # possible way to store previously used states - may be too memory expensive however
-
     def apply_action(self, action: PlaceAction | None):
         """
         Apply the action to the current state
@@ -63,15 +61,41 @@ class SimBoard:
         if not action:
             print("ERROR: No action given")
             return
-        lines_to_clear : set[Coord] = set()
+        
         for coord in action.coords:
             self._state[coord] = CellState(self._turn_color)
-            lines_to_clear.update(self._row_occupied(coord))
-            lines_to_clear.update(self._col_occupied(coord))
-        for coord in lines_to_clear:
-            self._state[coord] = CellState(None)
+            
+        self.clear_lines(action)
+        
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
+        
+        print(self.render(True))
+
+    def clear_lines(self, action):
+        min_r = min(c.r for c in action.coords)
+        max_r = max(c.r for c in action.coords)
+        min_c = min(c.c for c in action.coords)
+        max_c = max(c.c for c in action.coords)
+        
+        remove_r_coords = [
+            Coord(r, c)
+            for r in range(min_r, max_r + 1)
+            for c in range(BOARD_N)
+            if self._row_occupied(Coord(r, c))
+        ]
+
+        remove_c_coords = [
+            Coord(r, c)
+            for r in range(BOARD_N)
+            for c in range(min_c, max_c + 1)
+            if self._col_occupied(Coord(r, c))
+        ]
+        
+        for coord in remove_r_coords:
+            self._state[coord] = CellState(None)
+        for coord in remove_c_coords:
+            self._state[coord] = CellState(None)
 
     def apply_ansi(self, str, bold=True, color=None):
         bold_code = "\033[1m" if bold else ""
@@ -96,7 +120,7 @@ class SimBoard:
                     color = "r" if color == PlayerColor.RED else "b"
                     text = f"{color}"
                     if use_color:
-                        output += self.apply_ansi(str=text, bold=False, color=color)
+                        output += self.apply_ansi(str=text, bold=True, color=color)
                     else:
                         output += text
                 else:
@@ -116,13 +140,13 @@ class SimBoard:
 
     def _cell_empty(self, coord: Coord) -> bool:
         return self._state[coord].player == None
-    
+
     def _row_occupied(self, coord: Coord) -> list[Coord]:
         if all(self._cell_occupied(Coord(coord.r, c)) for c in range(BOARD_N)):
             return [Coord(coord.r, c) for c in range(BOARD_N)]
         else:
             return []
-    
+
     def _col_occupied(self, coord: Coord) -> list[Coord]:
         if all(self._cell_occupied(Coord(r, coord.c)) for r in range(BOARD_N)):
             return [Coord(r, coord.c) for r in range(BOARD_N)]
@@ -165,8 +189,12 @@ class SimBoard:
         """
         The game is over if turn limit reached or one of the player cannot place any more pieces.
         """
-        return self.turn_limit_reached or not has_action(self._state, PlayerColor.RED) or not has_action(self._state, PlayerColor.BLUE)
-    
+        return (
+            self.turn_limit_reached
+            or not has_action(self._state, PlayerColor.RED)
+            or not has_action(self._state, PlayerColor.BLUE)
+        )
+
     @property
     def winner(self) -> PlayerColor | None:
         if not self.game_over:
@@ -176,7 +204,12 @@ class SimBoard:
         if not has_action(self._state, PlayerColor.BLUE):
             return PlayerColor.RED
         if self.turn_limit_reached:
-            return (PlayerColor.RED if self._player_token_count(PlayerColor.RED) > 
-                    self._player_token_count(PlayerColor.BLUE) else PlayerColor.BLUE)
+            print("turn limit reached")
+            return (
+                PlayerColor.RED
+                if self._player_token_count(PlayerColor.RED)
+                > self._player_token_count(PlayerColor.BLUE)
+                else PlayerColor.BLUE
+            )
 
     # TODO: what happens on turn_limit_reached?
