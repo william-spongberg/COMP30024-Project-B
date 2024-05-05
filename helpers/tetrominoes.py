@@ -30,6 +30,8 @@ def make_tetrominoes(coord: Coord) -> list[PlaceAction]:
     for i, moved_tetromino in enumerate(moved_tetrominoes):
         moved_tetrominoes[i] = PlaceAction(*moved_tetromino.coords)
     
+    moved_tetrominoes = list(set(moved_tetrominoes))
+    
     return moved_tetrominoes
 
 
