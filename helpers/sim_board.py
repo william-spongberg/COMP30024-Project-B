@@ -73,6 +73,7 @@ class SimBoard:
         print(self.render(True))
 
     def clear_lines(self, action):
+        coords_with_piece = self._occupied_coords() | set(action.coords)
         min_r = min(c.r for c in action.coords)
         max_r = max(c.r for c in action.coords)
         min_c = min(c.c for c in action.coords)
@@ -89,7 +90,7 @@ class SimBoard:
             Coord(r, c)
             for r in range(BOARD_N)
             for c in range(min_c, max_c + 1)
-            if self._col_occupied(Coord(r, c))
+            if all(Coord(r, c) in coords_with_piece for c in range(BOARD_N))
         ]
         
         for coord in remove_r_coords:
