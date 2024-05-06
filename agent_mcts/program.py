@@ -23,18 +23,16 @@ class Agent:
 
     # attributes
     board: SimBoard  # state of game
+    root: MCTSNode  # root node of MCTS tree
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
-    
-    current_root: MCTSNode  # current root node of MCTS tree
 
     def __init__(self, color: PlayerColor, **referee: dict):
         self.init(color)
-        self.test_tetronimos()
 
     def action(self, **referee: dict) -> Action:
-        root = MCTSNode(state=self.board._state, color=self.color)
-        action = root.best_action(sim_no=10)
+        self.root = MCTSNode(state=self.board.state, color=self.color)
+        action = self.root.best_action(sim_no=10)
 
         if action:
             return action
@@ -42,41 +40,37 @@ class Agent:
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
-        #print(self.board.render(True))
+        # TODO: update MCTS tree every turn
+        # self.root.add_action(action)
+        # print(self.board.render(True))
 
     def init(self, color: PlayerColor):
         self.board = SimBoard()
+        self.root = MCTSNode(state=self.board.state, color=color)
         self.color = color
         self.name = "Agent_MCTS " + self.color.name
         self.opponent = self.color.opponent
 
         print(f"{self.name} *initiated*: {self.color}")
 
-    def test_tetronimos(self):
-        with open("tetronimos_test.txt", "w", encoding="utf-8") as f:
-            for tetromino in make_tetrominoes(Coord(5, 5)):
-                board = Board()
-                board.apply_action(tetromino)
-                print(board.render(), file=f)
-
     def random_move(self) -> Action:
-        coords = valid_coords(self.board._state, self.color)
+        coords = valid_coords(self.board.state, self.color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
 
         # try all available coords
-        while not valid_moves(self.board._state, coord):
+        while not valid_moves(self.board.state, coord):
             if coords:
                 coord = random.choice(coords)
                 coords.remove(coord)
             else:
                 break
         # if no valid moves available
-        if not valid_moves(self.board._state, coord):
+        if not valid_moves(self.board.state, coord):
             return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
 
         # return random move
-        return random.choice(valid_moves(self.board._state, coord))
+        return random.choice(valid_moves(self.board.state, coord))
 
 
 class AgentMCTS:
@@ -94,7 +88,11 @@ class AgentMCTS:
     @property
     def color(self):
         return self.agent.color
-    
+
+    @property
+    def name(self):
+        return self.agent.name
+
     @property
     def state(self):
         return self.agent.board.state

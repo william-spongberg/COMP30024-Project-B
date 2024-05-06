@@ -76,7 +76,11 @@ class AgentRandom:
     @property
     def color(self):
         return self.agent.color
-    
+
+    @property
+    def name(self):
+        return self.agent.name
+
     @property
     def state(self):
         return self.agent.board.state
