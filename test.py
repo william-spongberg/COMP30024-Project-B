@@ -63,9 +63,19 @@ def play_game():
         # *debug*
         if agent_red.state != game_state._state:
             print("agent_red state != game_state._state")
+            state: SimBoard = SimBoard(init_state=agent_red.state)
+            print(state.render(True))
+            for coord in game_state._state:
+                if game_state._state[coord] != agent_red.state[coord]:
+                    print("diff at", coord, game_state._state[coord], agent_red.state[coord])
             sys.exit(1)
         if agent_blue.state != game_state._state:
             print("agent_blue state != game_state._state")
+            state: SimBoard = SimBoard(init_state=agent_blue.state)
+            print(state.render(True))
+            for coord in game_state._state:
+                if game_state._state[coord] != agent_blue.state[coord]:
+                    print("diff at", coord, game_state._state[coord], agent_blue.state[coord])
             sys.exit(1)
 
     # print final game state
