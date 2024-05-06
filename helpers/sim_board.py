@@ -1,6 +1,5 @@
-import copy
 from .heuristics import BOARD_N
-from .movements import has_valid_move, valid_coords, valid_moves, is_valid
+from .movements import has_valid_move, valid_coords, valid_moves, is_valid, tetrominoes
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
@@ -18,6 +17,39 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
         actions.extend(valid_moves(state, coord, color))
     return actions
 
+def update_actions(prev_state: dict[Coord, CellState], new_state: dict[Coord, CellState], our_actions: set[Action],
+                opp_actions: set[Action], color: PlayerColor):
+    """
+    Get a new list of actions that are valid for the current state
+    """
+    for action in our_actions:
+        if not is_valid(new_state, action, color):
+            our_actions.remove(action)
+    for action in opp_actions:
+        if not is_valid(new_state, action, color.opponent):
+            opp_actions.remove(action)
+    for coord in changed_coords(prev_state, new_state):
+        update_actions_at_coord(new_state, our_actions, opp_actions, coord, color)
+    return
+        
+def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
+    """
+    Get all coordinates that have changed
+    """
+    return [coord for coord in state.keys() if state[coord] != new_state[coord]]
+
+def update_actions_at_coord(new_state: dict[Coord, CellState], our_actions: set[Action],
+                            opp_actions: set[Action], coord: Coord, color: PlayerColor):
+    """
+    Update the actions at a given coordinate
+    """
+    for action in [Action(*[coord + Coord(x, y) for x, y in tetromino.coords]) for tetromino in tetrominoes]:
+        if is_valid(new_state, action, color):
+            our_actions.add(action)
+        elif is_valid(new_state, action, color.opponent):
+            opp_actions.add(action)
+    return
+        
 
 def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """
