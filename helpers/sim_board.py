@@ -3,7 +3,7 @@ from .movements import has_valid_move, valid_coords, valid_moves, is_valid, tetr
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
-from referee.game.coord import Coord
+from referee.game.coord import Coord, Direction
 from referee.game.player import PlayerColor
 
 
@@ -17,19 +17,19 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
         actions.extend(valid_moves(state, coord, color))
     return actions
 
-def update_actions(prev_state: dict[Coord, CellState], new_state: dict[Coord, CellState], our_actions: set[Action],
+def update_actions(prev_state: dict[Coord, CellState], new_state: dict[Coord, CellState], my_actions: set[Action],
                 opp_actions: set[Action], color: PlayerColor):
     """
     Get a new list of actions that are valid for the current state
     """
-    for action in our_actions:
+    for action in my_actions:
         if not is_valid(new_state, action, color):
-            our_actions.remove(action)
+            my_actions.remove(action)
     for action in opp_actions:
         if not is_valid(new_state, action, color.opponent):
             opp_actions.remove(action)
     for coord in changed_coords(prev_state, new_state):
-        update_actions_at_coord(new_state, our_actions, opp_actions, coord, color)
+        update_actions_at_coord(new_state, my_actions, opp_actions, coord, color)
     return
         
 def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
@@ -43,11 +43,12 @@ def update_actions_at_coord(new_state: dict[Coord, CellState], our_actions: set[
     """
     Update the actions at a given coordinate
     """
-    for action in [Action(*[coord + Coord(x, y) for x, y in tetromino.coords]) for tetromino in tetrominoes]:
-        if is_valid(new_state, action, color):
-            our_actions.add(action)
-        elif is_valid(new_state, action, color.opponent):
-            opp_actions.add(action)
+    for coord in [adjacent for adjacent in [coord + dir for dir in Direction] if new_state[adjacent].player is None]:
+        for action in [Action(*[coord + Coord(x, y) for x, y in tetromino.coords]) for tetromino in tetrominoes]:
+            if is_valid(new_state, action, color):
+                our_actions.add(action)
+            elif is_valid(new_state, action, color.opponent):
+                opp_actions.add(action)
     return
         
 
