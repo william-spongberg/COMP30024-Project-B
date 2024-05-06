@@ -17,6 +17,8 @@ from referee.game.player import PlayerColor
 # TODO: remove as many checks as possible to increase efficiency
 # TODO: add transposition table to store board states and results, avoids re-searching same states
 
+total_actions: set[Action] = set()
+
 
 class MCTSNode:
     """
@@ -36,20 +38,18 @@ class MCTSNode:
         self.board: SimBoard = SimBoard(state, color)
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
-        self.action_to_children : dict[Action, MCTSNode] = {}
-        self.unexplored_actions: list[Action] = find_actions(
-            self.board._state, self.board._turn_color
-        )
         
-        self.parent_action: Action | None = parent_action
-        self.action_to_children : dict[Action, MCTSNode] = {}
-        self.children: list[MCTSNode] = []
-        self.color: PlayerColor = color
-        self.num_visits = 0
-        self.heuristic_value : float | None = None
         self.actions: list[Action] = find_actions(
             self.board._state, self.board._turn_color
         )
+        total_actions.update(self.actions)
+        self.action_to_children : dict[Action, MCTSNode] = {}
+        self.children: list[MCTSNode] = []
+        
+        self.color: PlayerColor = color
+        self.num_visits = 0
+        self.heuristic_value : float | None = None
+        
         self.results = defaultdict(int)
         self.results[1] = 0  # win
         self.results[-1] = 0  # loss
@@ -75,11 +75,11 @@ class MCTSNode:
         Add action to children
         """
         self.board.apply_action(action)
-        self.board._turn_color = self.board._turn_color.opponent
         
-        self.action_to_children[action] = MCTSNode(
-            copy.deepcopy(self.board._state), self.color, parent=self, parent_action=action
-        )
+        # TODO: in future keep track of all previous actions, useful for ML?
+        
+        # TODO: check if action already exists in children
+        self.children = []
 
     def is_terminal_node(self):
         return self.board.game_over

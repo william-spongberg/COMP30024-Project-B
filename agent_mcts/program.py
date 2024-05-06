@@ -1,6 +1,7 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing self
 
+import copy
 import random
 
 # import tensorflow as tf
@@ -31,7 +32,7 @@ class Agent:
         self.init(color)
 
     def action(self, **referee: dict) -> Action:
-        self.root = MCTSNode(state=self.board.state, color=self.color)
+        #self.root = MCTSNode(state=self.board.state, color=self.color)
         action = self.root.best_action(sim_no=10)
 
         if action:
@@ -41,12 +42,13 @@ class Agent:
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
         # TODO: update MCTS tree every turn
-        # self.root.add_action(action)
+        self.root.add_action(action)
+        print(self.root.board.render(True))
         # print(self.board.render(True))
 
     def init(self, color: PlayerColor):
         self.board = SimBoard()
-        self.root = MCTSNode(state=self.board.state, color=color)
+        self.root = MCTSNode(state=copy.deepcopy(self.board.state))
         self.color = color
         self.name = "Agent_MCTS " + self.color.name
         self.opponent = self.color.opponent
