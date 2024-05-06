@@ -1,4 +1,3 @@
-from argparse import Action
 import cProfile
 import sys
 
@@ -34,6 +33,19 @@ def get_agents():
     return agent_a, agent_b
 
 
+def check_agent_state(agent_blue, game_state):
+    if agent_blue.state != game_state._state:
+        print(f"{agent_blue.name} state != game_state._state")
+        state: SimBoard = SimBoard(init_state=agent_blue.state)
+        print(state.render(True))
+        for coord in game_state._state:
+            if game_state._state[coord] != agent_blue.state[coord]:
+                print(
+                    "diff at", coord, game_state._state[coord], agent_blue.state[coord]
+                )
+        sys.exit(1)
+
+
 def play_game():
     # test_tetronimoes()
     agent_red, agent_blue = get_agents()
@@ -44,12 +56,12 @@ def play_game():
         if game_state.turn_color == agent_red.color:
             # agent A turn
             move = agent_red.action()
-            print(f"agent {agent_red.color} placed", move)
+            print(f"{agent_red.name} placed", move)
             # print(game_state.render(True))
         else:
             # agent B turn
             move = agent_blue.action()
-            print(f"agent {agent_blue.color} placed", move)
+            print(f"{agent_blue.name} placed", move)
             # print(game_state.render(True))
 
         # apply move to game state
@@ -59,24 +71,10 @@ def play_game():
         # update agents
         agent_red.update(game_state.turn_color, move)
         agent_blue.update(game_state.turn_color, move)
-
+            
         # *debug*
-        if agent_red.state != game_state._state:
-            print("agent_red state != game_state._state")
-            state: SimBoard = SimBoard(init_state=agent_red.state)
-            print(state.render(True))
-            for coord in game_state._state:
-                if game_state._state[coord] != agent_red.state[coord]:
-                    print("diff at", coord, game_state._state[coord], agent_red.state[coord])
-            sys.exit(1)
-        if agent_blue.state != game_state._state:
-            print("agent_blue state != game_state._state")
-            state: SimBoard = SimBoard(init_state=agent_blue.state)
-            print(state.render(True))
-            for coord in game_state._state:
-                if game_state._state[coord] != agent_blue.state[coord]:
-                    print("diff at", coord, game_state._state[coord], agent_blue.state[coord])
-            sys.exit(1)
+        check_agent_state(agent_red, game_state)
+        check_agent_state(agent_blue, game_state)
 
     # print final game state
     print("final game state:")
