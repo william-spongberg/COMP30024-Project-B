@@ -223,20 +223,23 @@ class SimBoard:
         """
         return (
             self.turn_limit_reached
-            or not has_action(self._state, PlayerColor.RED)
-            or not has_action(self._state, PlayerColor.BLUE)
+            or not has_action(self._state, self._turn_color)
         )
 
     @property
     def winner(self) -> PlayerColor | None:
         if not self.game_over:
             return None
-        if not has_action(self._state, PlayerColor.RED):
-            return PlayerColor.BLUE
-        if not has_action(self._state, PlayerColor.BLUE):
-            return PlayerColor.RED
+        if not has_action(self._state, self._turn_color):
+            return self._turn_color.opponent
+        if not has_action(self._state, self._turn_color.opponent):
+            return self._turn_color
         if self.turn_limit_reached:
             # print("turn limit reached")
+            if self._player_token_count(PlayerColor.RED) == self._player_token_count(
+                PlayerColor.BLUE
+            ):
+                return None
             return (
                 PlayerColor.RED
                 if self._player_token_count(PlayerColor.RED)
