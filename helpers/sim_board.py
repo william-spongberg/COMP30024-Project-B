@@ -7,9 +7,7 @@ from referee.game.coord import Coord
 from referee.game.player import PlayerColor
 
 
-def find_actions(
-    state: dict[Coord, CellState], color: PlayerColor
-) -> list[Action]:
+def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Action]:
     """
     Find all possible valid actions for the current state
     """
@@ -43,53 +41,59 @@ class SimBoard:
 
     def __init__(
         self,
-        init_state: dict[Coord, CellState] = empty_state(),
+        init_state: dict[Coord, CellState] | None = None,
         init_color: PlayerColor = PlayerColor.RED,
     ):
         """
         Initialize the board state
         """
+        if init_state is None:
+            init_state = empty_state()
         self._state: dict[Coord, CellState] = init_state
         self._turn_color: PlayerColor = init_color
         self._turn_count: int = 0
         self._actions: list[Action]
 
-    def apply_action(self, action: Action | None):
+    def apply_action(self, action: Action | None = None):
         """
         Apply the action to the current state
         """
         if not action:
             print("ERROR: No action given")
             return
-        
+
         for coord in action.coords:
             self._state[coord] = CellState(self._turn_color)
-            
-        self.clear_lines()
-        
+
+        self.clear_lines(action)
+
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
-        
-        #print(self.render(True))
 
-    def clear_lines(self):
+        # print(self.render(True))
+
+    def clear_lines(self, action: Action):
         """
-        Clear all the lines if any
+        Clear all filled lines
         """
         coords_to_remove = []
-        for r in range(BOARD_N):
-            row = self._row_occupied(Coord(r, 0))
-            if row:
-                for coord in row:
-                    coords_to_remove.append(coord)
-        for c in range(BOARD_N):
-            col = self._col_occupied(Coord(0, c))
-            if col:
-                for coord in col:
-                    coords_to_remove.append(coord)
-                    
+
+        for coord in action.coords:
+            if self._cell_empty(coord):
+                continue
+            if self._cell_occupied(coord):
+                coords_to_remove.extend(self._get_filled_coords(coord))
+
         for coord in coords_to_remove:
             self._state[coord] = CellState()
+
+    def _get_filled_coords(self, coord: Coord) -> list[Coord]:
+        """
+        Get all the filled coordinates in the same row and column as the given coordinate
+        """
+        row_coords = [c for c in self._row_occupied(coord) if self._cell_occupied(c)]
+        col_coords = [c for c in self._col_occupied(coord) if self._cell_occupied(c)]
+        return row_coords + col_coords
 
     def apply_ansi(self, str, bold=True, color=None):
         bold_code = "\033[1m" if bold else ""
@@ -198,7 +202,7 @@ class SimBoard:
         if not has_action(self._state, PlayerColor.BLUE):
             return PlayerColor.RED
         if self.turn_limit_reached:
-            print("turn limit reached")
+            # print("turn limit reached")
             return (
                 PlayerColor.RED
                 if self._player_token_count(PlayerColor.RED)
