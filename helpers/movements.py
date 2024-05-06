@@ -1,3 +1,4 @@
+import random
 from .tetrominoes import make_tetrominoes
 from referee.game import PlayerColor, Coord, Action, Direction
 from referee.game.board import Board, CellState
@@ -7,25 +8,60 @@ from referee.game.board import Board, CellState
 tetrominoes = make_tetrominoes(Coord(0, 0))
 
 
-def is_valid(state: dict[Coord, CellState], piece: Action, color: PlayerColor) -> bool:
+def is_valid(state: dict[Coord, CellState], piece: Action, color: PlayerColor, first_turns: bool=False) -> bool:
     """
     Check if the piece can be placed on the board.
     """
     for coord in piece.coords:
-        if state[coord].player is not PlayerColor:
+        if state[coord].player is not None:
             return False
+    if first_turns:
+        return True
+    if not [coord + dir for dir in Direction for coord in piece.coords if state[coord + dir].player is color]:
+        return False
     return True
 
+def generate_random_move(state: dict[Coord, CellState], color: PlayerColor, first_turns: bool=False) -> Action:
+    """
+    Generate a random move for a given state and player colour.
+    """
+    if first_turns and color == PlayerColor.RED:
+            return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
+    coords = valid_coords(state, color, first_turns)
+    coord = random.choice(coords)
+    coords.remove(coord)
+
+    # try all available coords
+    while not valid_moves(state, coord, color, first_turns):
+        if coords:
+            coord = random.choice(coords)
+            coords.remove(coord)
+        else:
+            break
+    moves = valid_moves(state, coord, color, first_turns)
+    # if no valid moves available
+    if not moves:
+        return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+
+    # prints to track valid moves generated
+    print(
+        f"generated {len(moves)} valid moves at {coord}"
+    )
+    # for move in valid_moves(state, coord):
+    #     print(move)
+
+    # return random move
+    return random.choice(moves)
 
 def valid_coords(
-    state: dict[Coord, CellState], player_colour: PlayerColor
+    state: dict[Coord, CellState], player_colour: PlayerColor, first_turns: bool=False
 ) -> list[Coord]:
     """
     Get all valid adjacent coordinates for a player's state.
     """
 
     # if dict does not contain any player colour coords, return all coords
-    if not any([cell.player == player_colour for cell in state.values()]):
+    if first_turns:
         return list(state.keys())
 
     # else if dict contains a player colour coord, return all adjacent coords
@@ -50,15 +86,17 @@ def moves_at_coord(coord: Coord) -> list[Action]:
     ]
 
 
-def valid_moves(state: dict[Coord, CellState], coord: Coord, color: PlayerColor) -> list[Action]:
+def valid_moves(state: dict[Coord, CellState], coord: Coord, color: PlayerColor, first_turns: bool=False) -> list[Action]:
     """
     Get all possible valid tetrominoes at a given coordinate for a given state.
     """
+    if state[coord].player is not None:
+        return []
     return [
         Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         for tetromino in tetrominoes
         if is_valid(
-            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords]), color
+            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords]), color, first_turns
         )
     ]
 
