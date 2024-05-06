@@ -70,7 +70,7 @@ class SimBoard:
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
         
-        print(self.render(True))
+        # print(self.render(True))
 
     def clear_lines(self):
         """

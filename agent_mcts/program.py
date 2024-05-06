@@ -34,7 +34,7 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         root = MCTSNode(state=self.board._state, color=self.color)
-        action = root.best_action(sim_no=10)
+        action = root.best_action(sim_no=80)
 
         if action:
             return action
