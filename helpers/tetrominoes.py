@@ -1,13 +1,13 @@
-from referee.game import PlaceAction, Coord
+from referee.game import Action, Coord
 from referee.game.board import Board
 from referee.game.pieces import Piece, create_piece, PieceType
 
 BOARD_N = 11
 
 
-def make_tetrominoes(coord: Coord) -> list[PlaceAction]:
+def make_tetrominoes(coord: Coord) -> list[Action]:
     """
-    Get all possible tetrominoes as PlaceActions.
+    Get all possible tetrominoes as Actions.
     """
 
     tetrominoes = []
@@ -26,9 +26,9 @@ def make_tetrominoes(coord: Coord) -> list[PlaceAction]:
             moved_tetrominoes.append(Piece([coord + Coord(x, y) - origin for x, y in tetromino.coords]))
     
 
-    # convert all elements to PlaceAction
+    # convert all elements to Action
     for i, moved_tetromino in enumerate(moved_tetrominoes):
-        moved_tetrominoes[i] = PlaceAction(*moved_tetromino.coords)
+        moved_tetrominoes[i] = Action(*moved_tetromino.coords)
     
     moved_tetrominoes = list(set(moved_tetrominoes))
     

@@ -6,7 +6,7 @@ import warnings
 
 from helpers.movements import valid_coords, valid_moves
 from helpers.sim_board import SimBoard, find_actions
-from referee.game.actions import PlaceAction
+from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.coord import Coord
 from referee.game.player import PlayerColor
@@ -35,12 +35,12 @@ class MCTSNode:
         """
         self.board: SimBoard = SimBoard(state, color)
         self.parent: MCTSNode | None = parent
-        self.parent_action: PlaceAction | None = parent_action
-        self.action_to_children : dict[PlaceAction, MCTSNode] = {}
+        self.parent_action: Action | None = parent_action
+        self.action_to_children : dict[Action, MCTSNode] = {}
         self.children: list[MCTSNode] = []
         self.color: PlayerColor = color
         self.num_visits = 0
-        self.actions: list[PlaceAction] = find_actions(
+        self.actions: list[Action] = find_actions(
             self.board._state, self.board._turn_color
         )
         self.results = defaultdict(int)
@@ -64,7 +64,7 @@ class MCTSNode:
         return child_node
     
     # TODO: modify rollout to use this function. i.e. build up the tree to the end of the game including opponent nodes
-    def expand_by_action(self, action: PlaceAction):
+    def expand_by_action(self, action: Action):
         """
         Expand the current node by adding a new child node (opponent) based on the given action
         The board should not be updated before calling this function
@@ -163,7 +163,7 @@ class MCTSNode:
                 current_node = current_node.best_child()
         return current_node
 
-    def best_action(self, sim_no=100) -> PlaceAction | None:
+    def best_action(self, sim_no=100) -> Action | None:
         """
         Perform MCTS search for the best action
         """
@@ -197,7 +197,7 @@ class MCTSNode:
         print("ERROR: No best child found")
         return None
 
-    def get_random_move(self, board) -> PlaceAction | None:
+    def get_random_move(self, board) -> Action | None:
         """
         Get a random move for the current state
         """
@@ -220,7 +220,7 @@ class MCTSNode:
         # else return random valid move
         return random.choice(valid_moves(state, coord))
 
-    def heuristic(self, move: PlaceAction, board: SimBoard):
+    def heuristic(self, move: Action, board: SimBoard):
         # TODO: copy state instead of whole board for better efficiency
         current_board = copy.deepcopy(board)
         coords = valid_coords(current_board._state, current_board._turn_color)
@@ -236,7 +236,7 @@ class MCTSNode:
             move_count - opp_move_count + len(coords) - len(opp_coords)
         )  # bigger is better
 
-    def get_heuristic_based_move(self, board: SimBoard) -> PlaceAction | None:
+    def get_heuristic_based_move(self, board: SimBoard) -> Action | None:
         best_move = None
         best_heuristic = float("-inf")
         state = board._state

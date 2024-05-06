@@ -1,4 +1,4 @@
-from referee.game import PlayerColor, Coord, PlaceAction
+from referee.game import PlayerColor, Coord, Action
 from .lines import construct_horizontal_line, construct_vertical_line
 
 BOARD_N = 11
@@ -45,7 +45,7 @@ MAGIC_NUMBER =  1.1428571428571428 #8/7
 # We tested out the magic number by running the heuristic on test cases and adjusting it to get the best results.
 
 def calculate_heuristic(
-    board: dict[Coord, PlayerColor], goal: Coord, path: list[PlaceAction]
+    board: dict[Coord, PlayerColor], goal: Coord, path: list[Action]
 ):
     """
     Calculate the heuristic of a given move. Calculate both possible goal lines and return the minimum.
@@ -136,7 +136,7 @@ def empty_around_by(board: dict[Coord, PlayerColor], goal_line: list[Coord]):
             n += 4
     return n
 
-def path_continuity(path: list[PlaceAction]):
+def path_continuity(path: list[Action]):
     """
     Calculate the number of consecutive pieces in the path.
     """

@@ -1,5 +1,5 @@
 from .tetrominoes import make_tetrominoes
-from referee.game import PlayerColor, Coord, PlaceAction, Direction
+from referee.game import PlayerColor, Coord, Action, Direction
 from referee.game.board import Board, CellState
 
 # TODO: fix not all possible moves being generated?
@@ -7,7 +7,7 @@ from referee.game.board import Board, CellState
 tetrominoes = make_tetrominoes(Coord(0, 0))
 
 
-def is_valid(state: dict[Coord, CellState], piece: PlaceAction) -> bool:
+def is_valid(state: dict[Coord, CellState], piece: Action) -> bool:
     """
     Check if the piece can be placed on the board.
     """
@@ -40,25 +40,25 @@ def valid_coords(
     # avoids needing to check all 19 pieces
 
 
-def moves_at_coord(coord: Coord) -> list[PlaceAction]:
+def moves_at_coord(coord: Coord) -> list[Action]:
     """
     Get all possible tetrominoes at a given coordinate.
     """
     return [
-        PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         for tetromino in tetrominoes
     ]
 
 
-def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[PlaceAction]:
+def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     """
     Get all possible valid tetrominoes at a given coordinate for a given state.
     """
     return [
-        PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         for tetromino in tetrominoes
         if is_valid(
-            state, PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords])
+            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         )
     ]
 
@@ -70,7 +70,7 @@ def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
     for tetromino in tetrominoes:
         if is_valid(
             state,
-            PlaceAction(*[coord + Coord(x, y) for x, y in tetromino.coords]),
+            Action(*[coord + Coord(x, y) for x, y in tetromino.coords]),
         ):
             return True
     return False

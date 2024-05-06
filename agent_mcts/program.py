@@ -11,7 +11,7 @@ from helpers.tetrominoes import make_tetrominoes
 from referee.game import (
     PlayerColor,
     Action,
-    PlaceAction,
+    Action,
     Coord,
 )
 from referee.game.board import Board
@@ -59,7 +59,7 @@ class Agent:
                 board.apply_action(tetromino)
                 print(board.render(), file=f)
 
-    def random_move(self) -> PlaceAction:
+    def random_move(self) -> Action:
         coords = valid_coords(self.board._state, self.color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
@@ -73,7 +73,7 @@ class Agent:
                 break
         # if no valid moves available
         if not valid_moves(self.board._state, coord):
-            return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+            return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
 
         # return random move
         return random.choice(valid_moves(self.board._state, coord))

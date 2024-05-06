@@ -16,7 +16,7 @@ from referee.game import (
     GameUpdate,
     PlayerColor,
     Action,
-    PlaceAction,
+    Action,
     Coord,
     PlayerError,
     PlayerInitialising,
@@ -49,7 +49,7 @@ class Agent:
     # attributes
     game_board: Board  # to keep track of game
     game_state: dict[Coord, CellState]  # to try different moves
-    tetrominoes: list[PlaceAction]  # list of all possible tetrominoes
+    tetrominoes: list[Action]  # list of all possible tetrominoes
     opponent: PlayerColor  # to keep track of opponent
     sim_logs: list[str]  # to keep track of simulation results
     sim_commentary: list[str]  # to keep track of simulation commentary
@@ -172,11 +172,11 @@ class Agent:
         # (/t = tab)
 
         # if no valid moves, print message
-        if action == PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0)):
+        if action == Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0)):
             print(f"ERROR: No valid moves for {self._color}")
         return action
 
-    def get_random_move(self) -> PlaceAction:
+    def get_random_move(self) -> Action:
         coords = valid_coords(self.game_state, self._color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
@@ -190,7 +190,7 @@ class Agent:
                 break
         # if no valid moves available
         if valid_moves(self.game_state,  coord) == []:
-            return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+            return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
         return random.choice(valid_moves(self.game_state, coord))
 
     def file_log_handler(self, message: str):

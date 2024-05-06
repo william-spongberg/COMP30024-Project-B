@@ -1,6 +1,6 @@
 from .heuristics import BOARD_N
 from .movements import has_valid_move, valid_coords, valid_moves
-from referee.game.actions import PlaceAction
+from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
 from referee.game.coord import Coord
@@ -9,12 +9,12 @@ from referee.game.player import PlayerColor
 
 def find_actions(
     state: dict[Coord, CellState], color: PlayerColor
-) -> list[PlaceAction]:
+) -> list[Action]:
     """
     Find all possible valid actions for the current state
     """
     coords: list[Coord] = valid_coords(state, color)
-    actions: list[PlaceAction] = []
+    actions: list[Action] = []
     for coord in coords:
         actions.extend(valid_moves(state, coord))
     return actions
@@ -52,9 +52,9 @@ class SimBoard:
         self._state: dict[Coord, CellState] = init_state
         self._turn_color: PlayerColor = init_color
         self._turn_count: int = 0
-        self._actions: list[PlaceAction]
+        self._actions: list[Action]
 
-    def apply_action(self, action: PlaceAction | None):
+    def apply_action(self, action: Action | None):
         """
         Apply the action to the current state
         """

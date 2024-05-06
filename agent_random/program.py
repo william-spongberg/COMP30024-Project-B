@@ -6,7 +6,7 @@ import random
 
 from helpers.sim_board import SimBoard
 from helpers.movements import valid_moves, valid_coords
-from referee.game import PlayerColor, Action, PlaceAction, Coord
+from referee.game import PlayerColor, Action, Action, Coord
 from referee.game.board import Board
 
 
@@ -35,7 +35,7 @@ class Agent:
 
         print(f"{self.name} *initiated*: {self.color}")
 
-    def get_random_move(self) -> PlaceAction:
+    def get_random_move(self) -> Action:
         coords = valid_coords(self.board.state, self.color)
         coord: Coord = random.choice(coords)
         coords.remove(coord)
@@ -49,7 +49,7 @@ class Agent:
                 break
         # if no valid moves available
         if not valid_moves(self.board.state, coord):
-            return PlaceAction(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+            return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
 
         # prints to track valid moves generated
         print(
