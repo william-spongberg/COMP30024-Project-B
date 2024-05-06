@@ -94,3 +94,7 @@ class AgentMCTS:
     @property
     def color(self):
         return self.agent.color
+    
+    @property
+    def state(self):
+        return self.agent.board.state

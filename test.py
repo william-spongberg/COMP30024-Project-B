@@ -1,3 +1,4 @@
+from argparse import Action
 import cProfile
 import sys
 
@@ -34,21 +35,21 @@ def get_agents():
 
 
 def play_game():
-    #test_tetronimoes()
-    agent_r, agent_b = get_agents()
-    game_state: Board = Board()#SimBoard = SimBoard()
+    # test_tetronimoes()
+    agent_red, agent_blue = get_agents()
+    game_state: Board = Board()  # SimBoard = SimBoard()
 
     # play game until over
     while not game_state.game_over:
-        if game_state.turn_color == agent_r.color:
+        if game_state.turn_color == agent_red.color:
             # agent A turn
-            move = agent_r.action()
-            print(f"agent {agent_r.color} placed", move)
+            move = agent_red.action()
+            print(f"agent {agent_red.color} placed", move)
             # print(game_state.render(True))
         else:
             # agent B turn
-            move = agent_b.action()
-            print(f"agent {agent_b.color} placed", move)
+            move = agent_blue.action()
+            print(f"agent {agent_blue.color} placed", move)
             # print(game_state.render(True))
 
         # apply move to game state
@@ -56,8 +57,16 @@ def play_game():
         print(game_state.render(True))
 
         # update agents
-        agent_r.update(game_state.turn_color, move)
-        agent_b.update(game_state.turn_color, move)
+        agent_red.update(game_state.turn_color, move)
+        agent_blue.update(game_state.turn_color, move)
+
+        # *debug*
+        if agent_red.state != game_state._state:
+            print("agent_red state != game_state._state")
+            sys.exit(1)
+        if agent_blue.state != game_state._state:
+            print("agent_blue state != game_state._state")
+            sys.exit(1)
 
     # print final game state
     print("final game state:")
