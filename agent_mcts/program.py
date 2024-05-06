@@ -2,19 +2,21 @@
 # Project Part B: Game Playing self
 
 import copy
+import gc
+from hmac import new
 import random
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
-from helpers.movements import valid_coords, valid_moves
+from helpers.movements import generate_random_move
 from helpers.sim_board import SimBoard
-from helpers.tetrominoes import make_tetrominoes
 from referee.game import (
     PlayerColor,
     Action,
     Action,
     Coord,
 )
+from referee.game import board
 from referee.game.board import Board
 
 # TODO: redesign Board data structure to be more efficient
@@ -24,7 +26,7 @@ class Agent:
 
     # attributes
     board: SimBoard  # state of game
-    root: MCTSNode  # root node of MCTS tree
+    root: MCTSNode | None  # root node of MCTS tree NOTE: not to initialise until after first two turns
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
 
@@ -32,8 +34,13 @@ class Agent:
         self.init(color)
 
     def action(self, **referee: dict) -> Action:
-        #self.root = MCTSNode(state=self.board.state, color=self.color)
-        action = self.root.best_action(sim_no=10)
+        if self.board.turn_count < 2:
+            return generate_random_move(self.board.state, self.color, first_turns=True)
+        else:
+            if not self.root:
+                self.root = MCTSNode(state=copy.deepcopy(self.board.state), color=self.color)
+                
+        action = self.root.best_action(sim_no=5)
 
         if action:
             return action
@@ -41,39 +48,35 @@ class Agent:
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
-        # TODO: update MCTS tree every turn
-        self.root.add_action(action)
-        print(self.root.board.render(True))
-        # print(self.board.render(True))
+        if not self.root:
+            return
+        new_root = self.root.get_child(action)
+        self.root.free_node(new_root)
+        gc.collect()
+        self.root = new_root
+        # print(self.root.board.render(True))
 
     def init(self, color: PlayerColor):
         self.board = SimBoard()
-        self.root = MCTSNode(state=copy.deepcopy(self.board.state))
         self.color = color
+        self.root = None
         self.name = "Agent_MCTS " + self.color.name
         self.opponent = self.color.opponent
 
         print(f"{self.name} *initiated*: {self.color}")
 
     def random_move(self) -> Action:
-        coords = valid_coords(self.board.state, self.color)
-        coord: Coord = random.choice(coords)
-        coords.remove(coord)
-
-        # try all available coords
-        while not valid_moves(self.board.state, coord):
-            if coords:
-                coord = random.choice(coords)
-                coords.remove(coord)
-            else:
-                break
-        # if no valid moves available
-        if not valid_moves(self.board.state, coord):
-            return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
-
-        # return random move
-        return random.choice(valid_moves(self.board.state, coord))
-
+        return random.choice(list(self.available_moves))
+    
+    async def async_thinking(self):
+        # TODO: implement async thinking no matter who is taking the turn
+        pass
+    
+    @property
+    def available_moves(self) -> set[Action]:
+        if self.root:
+            return self.root.my_actions
+        return set()
 
 class AgentMCTS:
     # wrap Agent class

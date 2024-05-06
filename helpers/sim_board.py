@@ -22,12 +22,18 @@ def update_actions(prev_state: dict[Coord, CellState], new_state: dict[Coord, Ce
     """
     Get a new list of actions that are valid for the current state
     """
+    action_to_remove_in_my_actions = []
+    action_to_remove_in_opp_actions = []
     for action in my_actions:
         if not is_valid(new_state, action, color):
-            my_actions.remove(action)
+            action_to_remove_in_my_actions.append(action)
     for action in opp_actions:
         if not is_valid(new_state, action, color.opponent):
-            opp_actions.remove(action)
+            action_to_remove_in_opp_actions.append(action)
+    for action in action_to_remove_in_my_actions:
+        my_actions.remove(action)
+    for action in action_to_remove_in_opp_actions:
+        opp_actions.remove(action)
     for coord in changed_coords(prev_state, new_state):
         update_actions_at_coord(new_state, my_actions, opp_actions, coord, color)
     return
