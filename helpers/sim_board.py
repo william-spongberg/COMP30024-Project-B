@@ -1,5 +1,6 @@
+import copy
 from .heuristics import BOARD_N
-from .movements import has_valid_move, valid_coords, valid_moves
+from .movements import has_valid_move, valid_coords, valid_moves, is_valid
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
@@ -14,7 +15,7 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
     coords: list[Coord] = valid_coords(state, color)
     actions: list[Action] = []
     for coord in coords:
-        actions.extend(valid_moves(state, coord))
+        actions.extend(valid_moves(state, coord, color))
     return actions
 
 
@@ -25,7 +26,7 @@ def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     coords: list[Coord] = valid_coords(state, color)
 
     for coord in coords:
-        if has_valid_move(state, coord):
+        if has_valid_move(state, coord, color):
             return True
     return False
 
