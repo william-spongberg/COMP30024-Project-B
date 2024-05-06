@@ -90,7 +90,7 @@ class MCTSNode:
         return self.board.game_over
 
     def is_fully_expanded(self):
-        for action in self.opp_actions:
+        for action in self.my_actions:
             if action not in self.__action_to_children:
                 return False
         return True
@@ -188,11 +188,12 @@ class MCTSNode:
         while current_node and not current_node.is_terminal_node():
             if not current_node.is_fully_expanded():
                 action = random.choice(
-                    [action for action in current_node.opp_actions 
+                    [action for action in current_node.my_actions 
                      if action not in current_node.__action_to_children])
                 return current_node.expand(action)
             else:
                 print("fully expanded", current_node.is_fully_expanded())
+                print("actions: ", current_node.my_actions)
                 print("children: ", current_node.__action_to_children)
                 current_node = current_node.best_child()
         return current_node
@@ -237,7 +238,7 @@ class MCTSNode:
         """
         Get a random move for the current state
         """
-        return random.choice(list(self.opp_actions))
+        return random.choice(list(self.my_actions))
 
     # def heuristic(self, move: Action, board: SimBoard):
     #     # TODO: copy state instead of whole board for better efficiency
