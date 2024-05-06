@@ -37,9 +37,16 @@ class MCTSNode:
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
         self.action_to_children : dict[Action, MCTSNode] = {}
+        self.unexplored_actions: list[Action] = find_actions(
+            self.board._state, self.board._turn_color
+        )
+        
+        self.parent_action: Action | None = parent_action
+        self.action_to_children : dict[Action, MCTSNode] = {}
         self.children: list[MCTSNode] = []
         self.color: PlayerColor = color
         self.num_visits = 0
+        self.heuristic_value : float | None = None
         self.actions: list[Action] = find_actions(
             self.board._state, self.board._turn_color
         )
@@ -107,6 +114,31 @@ class MCTSNode:
                 return current_board._turn_color.opponent
         
         return current_board.winner
+    
+    def new_rollout(self, max_steps) -> PlayerColor | None:
+        """
+        Simulate a random v random game from the current node
+        not pushing all the way to the end of the game but stopping at max_steps
+        """
+        current_board: SimBoard = copy.deepcopy(self.board)
+        steps = 0
+        color = current_board._turn_color
+        if not self.heuristic_value:
+            self.heuristic_value = self.board_heuristic(current_board.state, self.color)
+        while steps < max_steps and not current_board.game_over:
+            # light playout policy
+            action = self.get_random_move(current_board)
+            if action:
+                current_board.apply_action(action)
+                steps += 1
+            else:
+                warnings.warn("ERROR: No action available in rollout but not game over yet")
+                return current_board._turn_color.opponent
+        if (current_board.winner):
+            return current_board.winner
+        else:
+            return color if self.board_heuristic(current_board.state, self.color) > self.heuristic_value else color.opponent
+            
 
     def backpropagate(self, result):
         """
@@ -171,7 +203,8 @@ class MCTSNode:
                 return None
             # simulation
             # print("simulating")
-            reward = v.rollout()
+            # reward = v.rollout()
+            reward = v.new_rollout(4)
             if not reward:
                 print("ERROR: No winner found")
                 return None
@@ -230,6 +263,16 @@ class MCTSNode:
             opp_move_count += len(valid_moves(current_board._state, coord))
         return (
             move_count - opp_move_count + len(coords) - len(opp_coords)
+        )  # bigger is better
+        
+    def board_heuristic(self, state: dict[Coord, CellState], color: PlayerColor):
+        """
+        heuristic function to predict if this player is winning
+        """
+        move_count = len(find_actions(state, color))
+        opp_move_count = len(find_actions(state, color.opponent))
+        return (
+            move_count - opp_move_count
         )  # bigger is better
 
     def get_heuristic_based_move(self, board: SimBoard) -> Action | None:
