@@ -70,7 +70,7 @@ class SimBoard:
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
         
-        print(self.render(True))
+        #print(self.render(True))
 
     def clear_lines(self):
         """
@@ -81,13 +81,11 @@ class SimBoard:
             row = self._row_occupied(Coord(r, 0))
             if row:
                 for coord in row:
-                    #self._state[coord] = CellState()
                     coords_to_remove.append(coord)
         for c in range(BOARD_N):
             col = self._col_occupied(Coord(0, c))
             if col:
                 for coord in col:
-                    #self._state[coord] = CellState()
                     coords_to_remove.append(coord)
                     
         for coord in coords_to_remove:

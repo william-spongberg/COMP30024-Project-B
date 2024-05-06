@@ -55,8 +55,8 @@ class Agent:
         print(
             f"generated {len(valid_moves(self.board.state, coord))} valid moves at {coord}"
         )
-        for move in valid_moves(self.board.state, coord):
-            print(move)
+        # for move in valid_moves(self.board.state, coord):
+        #     print(move)
 
         # return random move
         return random.choice(valid_moves(self.board.state, coord))
