@@ -63,20 +63,16 @@ class MCTSNode:
         self.children.append(child_node)
         return child_node
     
-    # TODO: modify rollout to use this function. i.e. build up the tree to the end of the game including opponent nodes
-    def expand_by_action(self, action: Action):
+    def add_action(self, action: Action):
         """
-        Expand the current node by adding a new child node (opponent) based on the given action
-        The board should not be updated before calling this function
+        Add action to children
         """
-        board_node: SimBoard = copy.deepcopy(self.board)
-        self.actions.pop(self.actions.index(action))
-        board_node.apply_action(action)
-        child_node: MCTSNode = MCTSNode(
-            board_node._state, color=self.color.opponent, parent=self, parent_action=action
+        self.board.apply_action(action)
+        self.board._turn_color = self.board._turn_color.opponent
+        
+        self.action_to_children[action] = MCTSNode(
+            copy.deepcopy(self.board._state), self.color, parent=self, parent_action=action
         )
-        self.action_to_children[action] = child_node
-        return child_node
 
     def is_terminal_node(self):
         return self.board.game_over
