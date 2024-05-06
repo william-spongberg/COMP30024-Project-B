@@ -65,38 +65,33 @@ class SimBoard:
         for coord in action.coords:
             self._state[coord] = CellState(self._turn_color)
             
-        self.clear_lines(action)
+        self.clear_lines()
         
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
         
         print(self.render(True))
 
-    def clear_lines(self, action):
-        coords_with_piece = self._occupied_coords() | set(action.coords)
-        min_r = min(c.r for c in action.coords)
-        max_r = max(c.r for c in action.coords)
-        min_c = min(c.c for c in action.coords)
-        max_c = max(c.c for c in action.coords)
-        
-        remove_r_coords = [
-            Coord(r, c)
-            for r in range(min_r, max_r + 1)
-            for c in range(BOARD_N)
-            if all(Coord(r, c) in coords_with_piece for c in range(BOARD_N))
-        ]
-
-        remove_c_coords = [
-            Coord(r, c)
-            for r in range(BOARD_N)
-            for c in range(min_c, max_c + 1)
-            if all(Coord(r, c) in coords_with_piece for c in range(BOARD_N))
-        ]
-        
-        for coord in remove_r_coords:
-            self._state[coord] = CellState(None)
-        for coord in remove_c_coords:
-            self._state[coord] = CellState(None)
+    def clear_lines(self):
+        """
+        Clear all the lines if any
+        """
+        coords_to_remove = []
+        for r in range(BOARD_N):
+            row = self._row_occupied(Coord(r, 0))
+            if row:
+                for coord in row:
+                    #self._state[coord] = CellState()
+                    coords_to_remove.append(coord)
+        for c in range(BOARD_N):
+            col = self._col_occupied(Coord(0, c))
+            if col:
+                for coord in col:
+                    #self._state[coord] = CellState()
+                    coords_to_remove.append(coord)
+                    
+        for coord in coords_to_remove:
+            self._state[coord] = CellState()
 
     def apply_ansi(self, str, bold=True, color=None):
         bold_code = "\033[1m" if bold else ""
