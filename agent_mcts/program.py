@@ -51,7 +51,7 @@ class Agent:
         if not self.root:
             return
         new_root = self.root.get_child(action)
-        self.root.free_node(new_root)
+        self.root.chop_nodes_except(new_root)
         gc.collect()
         self.root = new_root
         # print(self.root.board.render(True))

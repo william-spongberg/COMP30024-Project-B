@@ -23,7 +23,7 @@ class MCTSNode:
     """
     Node class for the Monte Carlo Tree Search algorithm
     """
-    
+    state_to_move: dict[dict[Coord, CellState], set[Action]] = {}
     def __init__(
         self,
         state: dict[Coord, CellState],
@@ -39,17 +39,15 @@ class MCTSNode:
         self.parent_action: Action | None = parent_action
         
         self.my_actions: set[Action]
-        self.opp_actions: set[Action]
-        if parent:
-            # swap actions since we are now the opponent
-            self.my_actions = copy.deepcopy(parent.opp_actions)
-            self.opp_actions = copy.deepcopy(parent.my_actions)
-            update_actions(parent.board.state, self.board.state, self.my_actions, self.opp_actions, color)
+        if parent and parent.parent and parent.parent.my_actions:
+            self.my_actions = copy.deepcopy(parent.parent.my_actions)
+            update_actions(parent.board.state, self.board.state, self.my_actions, color)
         else:
+            print("no parent")
             self.my_actions = set(find_actions(state, color))
-            self.opp_actions = set(find_actions(state, color.opponent))
+        # self.my_actions = set(find_actions(state, color))
             
-        self.__action_to_children: dict[Action, 'MCTSNode'] = {} # opponent action to child node
+        self.__action_to_children: dict[Action, 'MCTSNode'] = {} # my actions to child node
         
         self.color: PlayerColor = color
         self.num_visits = 0
@@ -69,7 +67,7 @@ class MCTSNode:
         board_node.apply_action(action)
         # print(board_node)
         child_node: MCTSNode = MCTSNode(
-            board_node._state, self.color.opponent, parent=self, parent_action=action
+            board_node._state, board_node.turn_color, parent=self, parent_action=action
         )
 
         self.__action_to_children[action] = child_node
@@ -192,10 +190,11 @@ class MCTSNode:
                      if action not in current_node.__action_to_children])
                 return current_node.expand(action)
             else:
-                print("fully expanded", current_node.is_fully_expanded())
-                print("actions: ", current_node.my_actions)
-                print("children: ", current_node.__action_to_children)
-                current_node = current_node.best_child()
+                if not current_node.my_actions:
+                    print("ERROR: No actions available")
+                    return None
+                if (current_node.__action_to_children):
+                    return current_node.best_child()
         return current_node
 
     def best_action(self, sim_no=100) -> Action | None:
@@ -284,27 +283,27 @@ class MCTSNode:
     #                 best_move = move
     #     return best_move
     
-    def free_node(self, node: 'MCTSNode | None' = None):
+    def chop_nodes_except(self, node: 'MCTSNode | None' = None):
         """
         To free up memory, delele all useless nodes
         need to call gc.collect() after this function
         params: node: node to keep as it will be the new root
         """
-        if self.board:
+        if (node):
+            for child in self.__action_to_children.values():
+                if node and child == node:
+                    continue
+                else:
+                    child.chop_nodes_except()
+        else:
+            del self.__action_to_children
             del self.board
-        del self.parent
-        del self.my_actions
-        del self.opp_actions
-        for child in self.__action_to_children.values():
-            if node and child == node:
-                node.parent = None
-                continue
-            else:
-                child.free_node()
-        del self.__action_to_children
-        del self.color
-        del self.num_visits
-        del self.results
+            del self.parent
+            del self.parent_action
+            del self.my_actions
+            del self.results
+            del self.color
+       
     
     def get_child(self, action: Action):
         """
