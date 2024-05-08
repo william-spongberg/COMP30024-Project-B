@@ -18,7 +18,7 @@ from referee.game import (
 # TODO: redesign Board data structure to be more efficient
 
 NARROW_SIM_NO = 100
-WIDE_SIM_NO = 30
+WIDE_SIM_NO = 50
 # MAX_STEPS = 10 # not used, should modify MCTS class to use this
 
 class Agent:
@@ -39,12 +39,14 @@ class Agent:
             if not self.root:
                 self.root = MCTSNode(self.board)
         
-        if len(self.root.my_actions) > 50 and not self.root.danger:
+        if len(self.root.my_actions) > 150:
+            return self.random_move()
+        if len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
             action = self.root.best_action(min((int)(len(self.root.my_actions)/2), WIDE_SIM_NO))
         else:
             # take it serious on intensive situations
-            action = self.root.best_action(max((int)(len(self.root.my_actions)*1.5), NARROW_SIM_NO))
+            action = self.root.best_action(NARROW_SIM_NO)
         
         if action:
             # temp fix for invalid actions
