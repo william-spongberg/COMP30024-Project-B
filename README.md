@@ -11,6 +11,9 @@
 python -m referee -c [agent] [agent]
 (e.g python -m referee -c agent_random agent_mcts)
 
+## Running with limits
+python -m referee -s 250 -t 180.0 -c agent_random agent_mcts
+
 ## Testing the project
 
 1. python -m pip install snakeviz
