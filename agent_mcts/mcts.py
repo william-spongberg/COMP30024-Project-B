@@ -17,7 +17,7 @@ from referee.game.player import PlayerColor
 # TODO: remove as many checks as possible to increase efficiency
 # TODO: add transposition table to store board states and results, avoids re-searching same states
 
-MAX_STEPS = 10
+MAX_STEPS = 6
 
 class MCTSNode:
     """
@@ -55,6 +55,8 @@ class MCTSNode:
         self.results = defaultdict(int)
         self.results[1] = 0  # win
         self.results[-1] = 0  # loss
+        
+        self.danger = False
 
     def expand(self, action: Action):
         """
@@ -67,7 +69,7 @@ class MCTSNode:
         board_node.apply_action(action)
         # print(board_node)
         child_node: MCTSNode = MCTSNode(
-            board_node, parent=self, parent_action=action
+            board_node, parent=self, parent_action=action,
         )
 
         self.__action_to_children[action] = child_node
@@ -117,6 +119,7 @@ class MCTSNode:
                 warnings.warn("ERROR: No tree policy node found in rollout")
                 return None
         if current_node.is_terminal_node():
+            self.danger = True
             return current_node.board.winner
         if current_node.heuristics_judge() > current_node.heuristics_judge():
             return current_node.color
@@ -134,6 +137,7 @@ class MCTSNode:
         elif result == self.color.opponent:
             self.results[-1] += 1
         if self.parent:
+            self.parent.danger = self.danger
             self.parent.backpropagate(result)
 
     def best_child(self, c_param=1.4) -> 'MCTSNode':
