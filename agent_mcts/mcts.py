@@ -2,7 +2,6 @@ import copy
 import random
 from cmath import log
 from collections import defaultdict
-from socket import send_fds
 import warnings
 
 from helpers.movements import valid_coords, valid_moves
@@ -37,15 +36,14 @@ class MCTSNode:
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
         
-        self.my_actions: set[Action]
+        self.my_actions: list[Action]
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
-            self.my_actions = copy.deepcopy(parent.parent.my_actions)
+            self.my_actions = parent.parent.my_actions.copy()
             update_actions(parent.parent.board.state, self.board.state, self.my_actions, board.turn_color)
         else:
             print("no parent")
-            self.my_actions = set(find_actions(board.state, board.turn_color))
-        # self.my_actions = set(find_actions(state, color))
+            self.my_actions = find_actions(board.state, board.turn_color)
             
         self.__action_to_children: dict[Action, 'MCTSNode'] = {} # my actions to child node
         
@@ -72,17 +70,6 @@ class MCTSNode:
 
         self.__action_to_children[action] = child_node
         return child_node
-    
-    # def add_action(self, action: Action):
-    #     """
-    #     Add action to children
-    #     """
-    #     self.board.apply_action(action)
-        
-    #     # TODO: in future keep track of all previous actions, useful for ML?
-        
-    #     # TODO: check if action already exists in children
-    #     self.children = []
 
     def is_terminal_node(self):
         return self.board.game_over

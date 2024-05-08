@@ -39,9 +39,10 @@ class Agent:
         else:
             if not self.root:
                 self.root = MCTSNode(self.board)
-                
-        if self.root and len(self.root.my_actions) > 50:
-            return self.random_move()
+        
+        # if branching factor is too high, return random move
+        # if self.root and len(self.root.my_actions) > 50:
+        #     return self.random_move()
         
         action = self.root.best_action(sim_no=5)
 
@@ -76,10 +77,10 @@ class Agent:
         pass
     
     @property
-    def available_moves(self) -> set[Action]:
+    def available_moves(self) -> list[Action]:
         if self.root:
             return self.root.my_actions
-        return set()
+        return []
 
 class AgentMCTS:
     # wrap Agent class

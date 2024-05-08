@@ -1,6 +1,7 @@
 import random
+from unittest import result
 from .tetrominoes import make_tetrominoes
-from referee.game import PlayerColor, Coord, Action, Direction
+from referee.game import PlayerColor, Coord, Action, Direction, actions
 from referee.game.board import Board, CellState
 
 # TODO: fix not all possible moves being generated?
@@ -17,7 +18,7 @@ def is_valid(state: dict[Coord, CellState], piece: Action) -> bool:
             return False
     return True
 
-def check_adjacent_cells(coords: set[Coord], state: dict[Coord, CellState], color: PlayerColor) -> bool:
+def check_adjacent_cells(coords: list[Coord], state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """
     Check if the given coordinates have any adjacent cells of the same color
     """
@@ -96,8 +97,6 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     """
     Get all possible valid tetrominoes at a given coordinate for a given state.
     """
-    if state[coord].player is not None:
-        return []
     return [
         Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         for tetromino in tetrominoes
@@ -108,14 +107,14 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     
 def valid_moves_of_any_empty(state: dict[Coord, CellState], coord:Coord, color: PlayerColor) -> list[Action]:
     if (state[coord].player is not None):
-        return []
-    return [
-        Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
-        for tetromino in tetrominoes
-        if is_valid(
-            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
-        ) and check_adjacent_cells(set([coord + Coord(x, y) for x, y in tetromino.coords]), state, color)
-    ]
+        print("invalid coord")
+        exit()
+    result = []
+    for tetromino in tetrominoes:
+        action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        if is_valid(state, action) and check_adjacent_cells(action.coords, state, color):
+            result.append(action)
+    return result
 
 def has_valid_move(state: dict[Coord, CellState], coord: Coord, color: PlayerColor) -> bool:
     """

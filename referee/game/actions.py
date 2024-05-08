@@ -18,9 +18,9 @@ class PlaceAction():
     c4: Coord
 
     @property
-    def coords(self) -> set[Coord]:
+    def coords(self) -> list[Coord]:
         try:
-            return set([self.c1, self.c2, self.c3, self.c4])
+            return list([self.c1, self.c2, self.c3, self.c4])
         except:
             raise AttributeError("Invalid coords")
 
