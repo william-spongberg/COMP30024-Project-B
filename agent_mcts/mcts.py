@@ -242,13 +242,13 @@ class MCTSNode:
         """
         heuristic function to predict if this player is winning
         """
-        move_count = len(self.my_actions)
+        # move_count = len(self.my_actions)
         if self.parent:
             opp_move_count = len(self.parent.my_actions)
         else:
             opp_move_count = len(find_actions(self.board.state, self.color.opponent))
         return (
-            move_count - opp_move_count
+            - opp_move_count
         )
     
     def chop_nodes_except(self, node: 'MCTSNode | None' = None):
