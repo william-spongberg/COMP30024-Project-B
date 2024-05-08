@@ -15,8 +15,6 @@ from referee.game import (
     Coord,
 )
 
-# TODO: redesign Board data structure to be more efficient
-
 NARROW_SIM_NO = 100
 WIDE_SIM_NO = 50
 # MAX_STEPS = 10 # not used, should modify MCTS class to use this
