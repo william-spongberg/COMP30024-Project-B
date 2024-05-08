@@ -26,30 +26,30 @@ class MCTSNode:
     state_to_move: dict[dict[Coord, CellState], set[Action]] = {}
     def __init__(
         self,
-        state: dict[Coord, CellState],
-        color: PlayerColor,
+        board: SimBoard,
         parent: 'MCTSNode | None' = None,
         parent_action: Action | None = None,
     ):
         """
         Initialize the node with the current board state
         """
-        self.board: SimBoard = SimBoard(state, color)
+        self.board: SimBoard = board
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
         
         self.my_actions: set[Action]
+        # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = copy.deepcopy(parent.parent.my_actions)
-            update_actions(parent.board.state, self.board.state, self.my_actions, color)
+            update_actions(parent.parent.board.state, self.board.state, self.my_actions, board.turn_color)
         else:
             print("no parent")
-            self.my_actions = set(find_actions(state, color))
+            self.my_actions = set(find_actions(board.state, board.turn_color))
         # self.my_actions = set(find_actions(state, color))
             
         self.__action_to_children: dict[Action, 'MCTSNode'] = {} # my actions to child node
         
-        self.color: PlayerColor = color
+        self.color: PlayerColor = board.turn_color
         self.num_visits = 0
         
         self.results = defaultdict(int)
@@ -67,7 +67,7 @@ class MCTSNode:
         board_node.apply_action(action)
         # print(board_node)
         child_node: MCTSNode = MCTSNode(
-            board_node._state, board_node.turn_color, parent=self, parent_action=action
+            board_node, parent=self, parent_action=action
         )
 
         self.__action_to_children[action] = child_node
@@ -97,10 +97,13 @@ class MCTSNode:
         """
         Simulate a random v random game from the current node
         """
+        push_step = 0
         current_node = self
-        while not current_node.board.game_over:
+        while not current_node.is_terminal_node():
             # light playout policy
             current_node = current_node._tree_policy()
+            push_step += 1
+            print("pushing step: ", push_step)
             if not current_node:
                 warnings.warn("ERROR: No tree policy node found in rollout")
                 return None
@@ -183,7 +186,7 @@ class MCTSNode:
         """
         current_node: MCTSNode = self
         # select nodes to expand
-        while current_node and not current_node.is_terminal_node():
+        if current_node and not current_node.is_terminal_node():
             if not current_node.is_fully_expanded():
                 action = random.choice(
                     [action for action in current_node.my_actions 
@@ -194,6 +197,7 @@ class MCTSNode:
                     print("ERROR: No actions available")
                     return None
                 if (current_node.__action_to_children):
+                    print("finish expanding, looking for best child")
                     return current_node.best_child()
         return current_node
 
@@ -201,7 +205,7 @@ class MCTSNode:
         """
         Perform MCTS search for the best action
         """
-        for _ in range(sim_no):
+        for i in range(sim_no):
             # expansion
             v: MCTSNode | None = self._tree_policy()
             if not v:
@@ -209,6 +213,7 @@ class MCTSNode:
                 return None
             # simulation
             # print("simulating")
+            print("rolling out: ", i)
             end_node = v.rollout()
             # reward = v.new_rollout(4)
             if not end_node:
@@ -218,7 +223,6 @@ class MCTSNode:
             # print("backpropagating")
             end_node.backpropagate(end_node.board.winner)
 
-        print("children: ", self.__action_to_children)
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:

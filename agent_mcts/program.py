@@ -38,8 +38,11 @@ class Agent:
             return generate_random_move(self.board.state, self.color, first_turns=True)
         else:
             if not self.root:
-                self.root = MCTSNode(state=copy.deepcopy(self.board.state), color=self.color)
+                self.root = MCTSNode(self.board)
                 
+        if self.root and len(self.root.my_actions) > 50:
+            return self.random_move()
+        
         action = self.root.best_action(sim_no=5)
 
         if action:
