@@ -1,5 +1,5 @@
 from .heuristics import BOARD_N
-from .movements import has_valid_move, valid_coords, valid_moves, is_valid, tetrominoes
+from .movements import has_valid_move, valid_coords, valid_moves, is_valid, check_adjacent_cells, valid_moves_of_any_empty
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
@@ -14,7 +14,7 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
     coords: list[Coord] = valid_coords(state, color)
     actions: list[Action] = []
     for coord in coords:
-        actions.extend(valid_moves(state, coord, color))
+        actions.extend(valid_moves(state, coord))
     return actions
 
 def update_actions(prev_state: dict[Coord, CellState], 
@@ -22,23 +22,29 @@ def update_actions(prev_state: dict[Coord, CellState],
     """
     Get a new list of actions that are valid for the current state
     """
+    prev_actions = my_actions.copy()
     action_to_remove_in_my_actions = []
     for action in my_actions:
-        if not is_valid(new_state, action, color):
-            # print("Invalid action found")
-            # print(action)
+        if not is_valid(new_state, action) or not check_adjacent_cells(action.coords, new_state, color):
             action_to_remove_in_my_actions.append(action)
     for action in action_to_remove_in_my_actions:
         my_actions.remove(action)
     for coord in changed_coords(prev_state, new_state):
-        my_actions.union(valid_moves(new_state, coord, color))
+        # two situations: new empty/new needed color
+        if new_state[coord] == CellState():
+            my_actions.update(valid_moves_of_any_empty(new_state, coord, color))
+        elif new_state[coord] == color:
+            my_actions.update(valid_moves(new_state, coord))
+    if not my_actions and prev_actions:
+        # no valid moves, pass
+        print("moves removed")
     return
         
 def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
     """
     Get all coordinates that have changed
     """
-    return [coord for coord in state.keys() if state[coord] != new_state[coord]]
+    return [coord for coord in state.keys() if state[coord] != new_state[coord]]        
 
 def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """

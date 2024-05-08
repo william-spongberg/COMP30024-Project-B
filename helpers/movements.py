@@ -8,18 +8,24 @@ from referee.game.board import Board, CellState
 tetrominoes = make_tetrominoes(Coord(0, 0))
 
 
-def is_valid(state: dict[Coord, CellState], piece: Action, color: PlayerColor, first_turns: bool=False) -> bool:
+def is_valid(state: dict[Coord, CellState], piece: Action) -> bool:
     """
     Check if the piece can be placed on the board.
     """
     for coord in piece.coords:
         if state[coord].player is not None:
             return False
-    if first_turns:
-        return True
-    if not [coord + dir for dir in Direction for coord in piece.coords if state[coord + dir].player is color]:
-        return False
     return True
+
+def check_adjacent_cells(coords: set[Coord], state: dict[Coord, CellState], color: PlayerColor) -> bool:
+    """
+    Check if the given coordinates have any adjacent cells of the same color
+    """
+    for coord in coords:
+        for dir in Direction:
+            if state.get(coord + dir) and state[coord + dir].player == color:
+                return True
+    return False
 
 def generate_random_move(state: dict[Coord, CellState], color: PlayerColor, first_turns: bool=False) -> Action:
     """
@@ -32,13 +38,13 @@ def generate_random_move(state: dict[Coord, CellState], color: PlayerColor, firs
     coords.remove(coord)
 
     # try all available coords
-    while not valid_moves(state, coord, color, first_turns):
+    while not valid_moves(state, coord):
         if coords:
             coord = random.choice(coords)
             coords.remove(coord)
         else:
             break
-    moves = valid_moves(state, coord, color, first_turns)
+    moves = valid_moves(state, coord)
     # if no valid moves available
     if not moves:
         return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
@@ -86,7 +92,7 @@ def moves_at_coord(coord: Coord) -> list[Action]:
     ]
 
 
-def valid_moves(state: dict[Coord, CellState], coord: Coord, color: PlayerColor, first_turns: bool=False) -> list[Action]:
+def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     """
     Get all possible valid tetrominoes at a given coordinate for a given state.
     """
@@ -96,10 +102,20 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord, color: PlayerColor,
         Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         for tetromino in tetrominoes
         if is_valid(
-            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords]), color, first_turns
+            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         )
     ]
-
+    
+def valid_moves_of_any_empty(state: dict[Coord, CellState], coord:Coord, color: PlayerColor) -> list[Action]:
+    if (state[coord].player is not None):
+        return []
+    return [
+        Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        for tetromino in tetrominoes
+        if is_valid(
+            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        ) and check_adjacent_cells(set([coord + Coord(x, y) for x, y in tetromino.coords]), state, color)
+    ]
 
 def has_valid_move(state: dict[Coord, CellState], coord: Coord, color: PlayerColor) -> bool:
     """
@@ -108,7 +124,7 @@ def has_valid_move(state: dict[Coord, CellState], coord: Coord, color: PlayerCol
     for tetromino in tetrominoes:
         if is_valid(
             state,
-            Action(*[coord + Coord(x, y) for x, y in tetromino.coords]), color
+            Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         ):
             return True
     return False
