@@ -1,9 +1,7 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing self
 
-import copy
 import gc
-from hmac import new
 import random
 
 # import tensorflow as tf
@@ -16,11 +14,11 @@ from referee.game import (
     Action,
     Coord,
 )
-from referee.game import board
-from referee.game.board import Board
 
 # TODO: redesign Board data structure to be more efficient
 
+SIM_NO = 20
+# MAX_STEPS = 10 # not used, should modify MCTS class to use this
 
 class Agent:
 
@@ -44,7 +42,7 @@ class Agent:
         # if self.root and len(self.root.my_actions) > 50:
         #     return self.random_move()
         
-        action = self.root.best_action(sim_no=5)
+        action = self.root.best_action(sim_no=20)
 
         if action:
             return action
