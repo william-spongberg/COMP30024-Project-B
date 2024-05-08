@@ -4,7 +4,7 @@ from cmath import log
 from collections import defaultdict
 import warnings
 
-from helpers.movements import valid_coords, valid_moves
+from helpers.movements import check_adjacent_cells, is_valid
 from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
 from referee.game.board import CellState
@@ -38,7 +38,7 @@ class MCTSNode:
         self.parent_action: Action | None = parent_action
         
         self.my_actions: list[Action]
-        self.untried_actions: list[Action] = []  # actions not yet tried
+
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
@@ -46,7 +46,8 @@ class MCTSNode:
         else:
             print("no parent")
             self.my_actions = find_actions(board.state, board.turn_color)
-        self.untried_actions = self.my_actions.copy()
+            
+        self.untried_actions = self.my_actions.copy() # actions not yet tried
         self.__action_to_children: dict[Action, 'MCTSNode'] = {} # my actions to child node
         
         self.color: PlayerColor = board.turn_color
@@ -176,21 +177,24 @@ class MCTSNode:
         """
         Select a node to expand based on the tree policy
         """
-        current_node: MCTSNode = self
         # select nodes to expand
-        if current_node and not current_node.is_terminal_node():
-            if not current_node.is_fully_expanded():
+        if not self.is_terminal_node():
+            if not self.is_fully_expanded():
                 action = random.choice(self.untried_actions)
                 self.untried_actions.remove(action)
-                return current_node.expand(action)
+                # met bug about expanding invalid action haven't fixed yet but this can be a temporary solution
+                if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
+                    self.my_actions.remove(action)
+                    return self._tree_policy()
+                return self.expand(action)
             else:
-                if not current_node.my_actions:
+                if not self.my_actions:
                     print("ERROR: No actions available")
                     return None
-                if (current_node.__action_to_children):
+                if (self.__action_to_children):
                     print("finish expanding, looking for best child")
-                    return current_node.best_child()
-        return current_node
+                    return self.best_child()
+        return self
 
     def best_action(self, sim_no=100) -> Action | None:
         """

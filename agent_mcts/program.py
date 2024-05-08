@@ -6,7 +6,7 @@ import random
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
-from helpers.movements import generate_random_move
+from helpers.movements import check_adjacent_cells, generate_random_move, is_valid
 from helpers.sim_board import SimBoard
 from referee.game import (
     PlayerColor,
@@ -47,6 +47,12 @@ class Agent:
             action = self.root.best_action(max((int)(len(self.root.my_actions)*1.5), NARROW_SIM_NO))
         
         if action:
+            # temp fix for invalid actions
+            if not check_adjacent_cells(action.coords, self.board.state, self.color):
+                self.root.untried_actions.remove(action)
+                self.root.my_actions.remove(action)
+                print(f"Invalid action: {action}")
+                return self.action()
             return action
         return self.random_move()
 
@@ -70,7 +76,11 @@ class Agent:
         print(f"{self.name} *initiated*: {self.color}")
 
     def random_move(self) -> Action:
-        return random.choice(list(self.available_moves))
+        action = random.choice(list(self.available_moves))
+        if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
+            self.available_moves.remove(action)
+            return self.random_move()
+        return action
     
     async def async_thinking(self):
         # TODO: implement async thinking no matter who is taking the turn

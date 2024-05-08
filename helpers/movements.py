@@ -24,7 +24,7 @@ def check_adjacent_cells(coords: list[Coord], state: dict[Coord, CellState], col
     """
     for coord in coords:
         for dir in Direction:
-            if state.get(coord + dir) and state[coord + dir].player == color:
+            if state[coord + dir].player == color:
                 return True
     return False
 
