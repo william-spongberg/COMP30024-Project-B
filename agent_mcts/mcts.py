@@ -38,6 +38,7 @@ class MCTSNode:
         self.parent_action: Action | None = parent_action
         
         self.my_actions: list[Action]
+        self.untried_actions: list[Action] = []  # actions not yet tried
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
@@ -45,7 +46,7 @@ class MCTSNode:
         else:
             print("no parent")
             self.my_actions = find_actions(board.state, board.turn_color)
-            
+        self.untried_actions = self.my_actions.copy()
         self.__action_to_children: dict[Action, 'MCTSNode'] = {} # my actions to child node
         
         self.color: PlayerColor = board.turn_color
@@ -76,10 +77,9 @@ class MCTSNode:
         return self.board.game_over
 
     def is_fully_expanded(self):
-        for action in self.my_actions:
-            if action not in self.__action_to_children:
-                return False
-        return True
+        if not self.untried_actions:
+            return True
+        return False
 
     def rollout(self) -> 'MCTSNode | None':
         """
@@ -176,9 +176,8 @@ class MCTSNode:
         # select nodes to expand
         if current_node and not current_node.is_terminal_node():
             if not current_node.is_fully_expanded():
-                action = random.choice(
-                    [action for action in current_node.my_actions 
-                     if action not in current_node.__action_to_children])
+                action = random.choice(self.untried_actions)
+                self.untried_actions.remove(action)
                 return current_node.expand(action)
             else:
                 if not current_node.my_actions:
