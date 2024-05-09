@@ -51,7 +51,7 @@ def check_agent_state(agent_blue, game_state):
 def play_game():
     # test_tetronimoes()
     agent_red, agent_blue = get_agents()
-    game_state: BitBoard = BitBoard()
+    game_state: Board = Board()
 
     # play game until over
     while not game_state.game_over:
@@ -75,8 +75,8 @@ def play_game():
         agent_blue.update(game_state.turn_color, move)
 
         # *debug*
-        # check_agent_state(agent_red, game_state)
-        # check_agent_state(agent_blue, game_state)
+        check_agent_state(agent_red, game_state)
+        check_agent_state(agent_blue, game_state)
 
     # print final game state
     print("final game state:")
