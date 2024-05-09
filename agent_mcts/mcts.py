@@ -16,12 +16,8 @@ from timeit import default_timer as timer
 # generally want to make more efficient (want at least 100 sims per move)
 # TODO: implement asynchronous MCTS to allow searching to continue while waiting for opponent move
 # not allowed in specifcation?
-# TODO: remove as many checks as possible to increase efficiency
-# TODO: debug invalid actions being generated (non-adjacent)
-# TODO: implement mcts time limit
 
-MAX_STEPS = 6
-
+CLOSE_TO_END = 100
 
 class MCTSNode:
     """
@@ -202,7 +198,7 @@ class MCTSNode:
                     return self.best_child()
         return self
 
-    def best_action(self, remaining_time_this_turn: float, sim_no=100) -> Action | None:
+    def best_action(self, remaining_time_this_turn: float, steps, sim_no=100) -> Action | None:
         """
         Perform MCTS search for the best action
         """
@@ -221,7 +217,7 @@ class MCTSNode:
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
-            end_node = v.new_rollout(MAX_STEPS)
+            end_node = v.new_rollout(steps)
             if end_node:
                 end_node.backpropagate(end_node.winning_color, self.color)
 
@@ -255,13 +251,20 @@ class MCTSNode:
     def heuristics_judge(self) -> int:
         """
         heuristic function to predict if this player is winning
-        """
-        # move_count = len(self.my_actions)
+        """ 
+        result = 0
         if self.parent:
-            opp_move_count = len(self.parent.my_actions)
+            result -= len(self.parent.my_actions)
         else:
-            opp_move_count = len(find_actions(self.board.state, self.color.opponent))
-        return -opp_move_count
+            result -= len(find_actions(self.board.state, self.color.opponent))
+        if self.board.turn_count > CLOSE_TO_END:
+            if self.color == PlayerColor.RED:
+                result += round((self.board.red_state - self.board.blue_state) + 
+                                len(self.my_actions)/ MAX_TURNS - self.board.turn_count)
+            else:
+                result += round((self.board.blue_state - self.board.red_state + 
+                                 len(self.my_actions)) / MAX_TURNS - self.board.turn_count)
+        return result
 
     def chop_nodes_except(self, node: "MCTSNode | None" = None):
         """

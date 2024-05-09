@@ -3,6 +3,7 @@
 
 import gc
 import random
+from re import M
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
@@ -17,10 +18,13 @@ from referee.game import (
     Coord,
 )
 
-NARROW_SIM_NO = 80
-WIDE_SIM_NO = 40
-# MAX_STEPS = 10 # not used, should modify MCTS class to use this
-
+WIDE_SIM_NO = 100
+MEDIUM_SIM_NO = 120
+NARROW_SIM_NO = 150
+BACKUP_TIME = 5
+WIDE_DEPTH = 2
+MEDIUM_DEPTH = 4
+NARROW_DEPTH = 6
 
 class Agent:
 
@@ -41,9 +45,6 @@ class Agent:
         else:
             if not self.root:
                 self.root = MCTSNode(self.board.copy())
-                
-        if len(self.root.my_actions) > 200:
-            return self.random_move()
         
         # time count
         if referee:
@@ -51,21 +52,24 @@ class Agent:
             time_remaining:float = referee["time_remaining"] # type: ignore
             estimate_turns = self.root.rollout_turns()
             estimation_cost = timer() - start_time
-            estimated_time = (time_remaining - estimation_cost) / estimate_turns
+            estimated_time = (time_remaining - estimation_cost - BACKUP_TIME) / estimate_turns
             print("Time left: ", time_remaining - estimation_cost)
             print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
         else:
             estimated_time = 10000
+            
+        if len(self.root.my_actions) > 200:
+            action = self.root.best_action(estimated_time, WIDE_DEPTH, WIDE_SIM_NO)
 
-        if len(self.root.my_actions) > 100 and not self.root.danger:
+        elif len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
-            action = self.root.best_action(estimated_time,
-                max((int)(len(self.root.my_actions) / 2), WIDE_SIM_NO)
+            action = self.root.best_action(estimated_time, MEDIUM_DEPTH,
+                max((int)(len(self.root.my_actions)*1.5), MEDIUM_SIM_NO)
             )
         else:
             # take it serious on intensive situations
-            action = self.root.best_action(estimated_time,
-                max((int)(len(self.root.my_actions)), NARROW_SIM_NO)
+            action = self.root.best_action(estimated_time, NARROW_DEPTH,
+                max((int)(len(self.root.my_actions)*2), NARROW_SIM_NO)
             )
 
         if action:
@@ -95,7 +99,7 @@ class Agent:
     def random_move(self) -> Action:
         action = random.choice(list(self.available_moves))
         if not is_valid(self.board.state, action) or not check_adjacent_cells(
-            action.coords, self.board.state, self.color
+            action, self.board.state, self.color
         ):
             print("Invalid action: ", action)
             print("state: ", self.board.render())
