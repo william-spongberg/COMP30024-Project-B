@@ -1,8 +1,7 @@
 import random
-from unittest import result
 from .tetrominoes import make_tetrominoes
 from referee.game import PlayerColor, Coord, Action, Direction, actions
-from referee.game.board import Board, CellState
+from referee.game.board import CellState
 
 # TODO: fix not all possible moves being generated?
 
@@ -123,9 +122,7 @@ def valid_moves_of_any_empty(
     ]
 
 
-def has_valid_move(
-    state: dict[Coord, CellState], coord: Coord, color: PlayerColor
-) -> bool:
+def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:
     """
     Check there is at least one valid move available.
     """

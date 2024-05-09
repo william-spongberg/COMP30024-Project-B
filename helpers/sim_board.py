@@ -52,7 +52,7 @@ def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     coords: list[Coord] = valid_coords(state, color)
 
     for coord in coords:
-        if has_valid_move(state, coord, color):
+        if has_valid_move(state, coord):
             return True
     return False
 
