@@ -58,6 +58,7 @@ class MCTSNode:
         # self.results[-1] = 0  # loss
         
         self.danger = False
+        self.winning_color:PlayerColor|None = None
 
     def expand(self, action: Action):
         """
@@ -101,7 +102,7 @@ class MCTSNode:
         
         return current_node
     
-    def new_rollout(self, max_steps) -> PlayerColor | None:
+    def new_rollout(self, max_steps) -> 'MCTSNode | None':
         """
         Simulate a random v random game from the current node
         not pushing all the way to the end of the game but stopping at max_steps
@@ -119,13 +120,15 @@ class MCTSNode:
             if not current_node:
                 warnings.warn("ERROR: No tree policy node found in rollout")
                 return None
-        self = current_node # make v the end node for backpropagation
         if current_node.is_terminal_node():
-            self.danger = True
-            return current_node.board.winner
-        if current_node.heuristics_judge() > current_node.heuristics_judge():
-            return current_node.color
-        return current_node.color.opponent
+            current_node.danger = True
+            current_node.winning_color = current_node.board.winner
+            return current_node
+        if current_node.heuristics_judge() > self.heuristics_judge():
+            current_node.winning_color = self.color
+        else:
+            current_node.winning_color = self.color.opponent
+        return current_node
             
 
     def backpropagate(self, result: PlayerColor | None, root_color: PlayerColor):
@@ -212,8 +215,9 @@ class MCTSNode:
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
-            winner = v.new_rollout(MAX_STEPS)
-            v.backpropagate(winner, self.color)
+            end_node = v.new_rollout(MAX_STEPS)
+            if (end_node):
+                end_node.backpropagate(end_node.winning_color, self.color)
             
             # rollout to the end of the game
             # end_node = v.rollout()
