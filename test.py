@@ -88,11 +88,11 @@ def play_game_multiple_times():
         play_game()
 
 
-# play_game()
-# cProfile.run("play_game()", "test.prof")
+#play_game()
 
+cProfile.run("play_game()", "test.prof")
+# cProfile.run("play_game_multiple_times()", "test.prof")
 
-cProfile.run("play_game_multiple_times()", "test.prof")
 p = pstats.Stats("test.prof")
 p.strip_dirs().sort_stats("cumulative").print_stats(10)
 p.strip_dirs().sort_stats("time").print_stats(10)
