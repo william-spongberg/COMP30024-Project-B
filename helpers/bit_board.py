@@ -7,6 +7,7 @@ from referee.game.player import PlayerColor
 
 
 class BitBoard:
+    # TODO: allow init_state
     def __init__(
         self,
         init_state: dict[Coord, CellState] | None = None,
@@ -25,9 +26,10 @@ class BitBoard:
         for coord in action.coords:
             index = coord.r * BOARD_N + coord.c
             if self._turn_color == PlayerColor.RED:
-                self.red_state |= 1 << index  # use bitwise OR to add a piece
+                # use bitwise OR to add piece
+                self.red_state |= 1 << index 
             else:
-                self.blue_state |= 1 << index  # use bitwise OR to add a piece
+                self.blue_state |= 1 << index
 
         self.clear_lines(action)
 
@@ -47,11 +49,13 @@ class BitBoard:
 
         for coord in coords_to_remove:
             index = coord.r * BOARD_N + coord.c
+            # remove piece from red and blue bit representations
             self.red_state &= ~(1 << index)
             self.blue_state &= ~(1 << index)
 
     def _cell_occupied(self, coord: Coord) -> bool:
         index = coord.r * BOARD_N + coord.c
+        # return true if red or blue has piece at cell
         return bool((self.red_state >> index) & 1) or bool(
             (self.blue_state >> index) & 1
         )
@@ -91,8 +95,10 @@ class BitBoard:
 
     def __getitem__(self, coord: Coord) -> CellState:
         index = coord.r * BOARD_N + coord.c
+        # if red has piece at cell, return red CellState
         if (self.red_state >> index) & 1:
             return CellState(PlayerColor.RED)
+        # if blue has piece at cell, return blue CellState
         elif (self.blue_state >> index) & 1:
             return CellState(PlayerColor.BLUE)
         else:
@@ -100,13 +106,16 @@ class BitBoard:
 
     def __setitem__(self, coord: Coord, cell: CellState):
         index = coord.r * BOARD_N + coord.c
+        # if the new state is red, add red piece and remove blue piece
         if cell == CellState(PlayerColor.RED):
             self.red_state |= 1 << index
             self.blue_state &= ~(1 << index)
+        # if the new state is blue, add blue piece and remove red piece
         elif cell == CellState(PlayerColor.BLUE):
             self.blue_state |= 1 << index
             self.red_state &= ~(1 << index)
         else:
+            # if new state is empty, remove both red and blue pieces
             self.red_state &= ~(1 << index)
             self.blue_state &= ~(1 << index)
 
@@ -124,8 +133,10 @@ class BitBoard:
 
     def _player_token_count(self, color: PlayerColor) -> int:
         if color == PlayerColor.RED:
+            # if player is red, count the number of 1s in red_state
             return bin(self.red_state).count("1")
         else:
+            # if player is blue, count the number of 1s in red_state
             return bin(self.blue_state).count("1")
 
     def _occupied_coords(self) -> list[Coord]:
@@ -147,14 +158,17 @@ class BitBoard:
     @property
     def state(self) -> dict[Coord, CellState]:
         state = {}
+        # for each cell in the board
         for r in range(BOARD_N):
             for c in range(BOARD_N):
-                index = r * BOARD_N + c
+                index = r * BOARD_N + c  # calculate the index in bit representation
+                # if red has piece at cell, add red CellState
                 if (self.red_state >> index) & 1:
                     state[Coord(r, c)] = CellState(PlayerColor.RED)
+                # if blue has piece at cell, add blue CellState
                 elif (self.blue_state >> index) & 1:
                     state[Coord(r, c)] = CellState(PlayerColor.BLUE)
-                else:
+                else:  # if cell empty, add empty CellState
                     state[Coord(r, c)] = CellState()
         return state
 
