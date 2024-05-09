@@ -3,6 +3,7 @@ from math import log
 from collections import defaultdict
 import warnings
 
+from helpers.bit_board import BitBoard
 from helpers.movements import check_adjacent_cells, is_valid
 from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
@@ -29,14 +30,14 @@ class MCTSNode:
 
     def __init__(
         self,
-        board: SimBoard,
+        board: BitBoard,
         parent: "MCTSNode | None" = None,
         parent_action: Action | None = None,
     ):
         """
         Initialize the node with the current board state
         """
-        self.board: SimBoard = board
+        self.board: BitBoard = board
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
 
@@ -75,7 +76,7 @@ class MCTSNode:
         Expand the current node by adding a new child node
         Using opponent move as action
         """
-        board_node: SimBoard = self.board.copy()
+        board_node: BitBoard = self.board.copy()
 
         # print(action)
         board_node.apply_action(action)

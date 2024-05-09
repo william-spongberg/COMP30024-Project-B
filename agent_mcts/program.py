@@ -24,7 +24,7 @@ WIDE_SIM_NO = 40
 class Agent:
 
     # attributes
-    board: SimBoard  # state of game
+    board: BitBoard  # state of game
     root: (
         MCTSNode | None
     )  # root node of MCTS tree NOTE: not to initialise until after first two turns
