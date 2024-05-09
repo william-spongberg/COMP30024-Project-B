@@ -43,13 +43,16 @@ class Agent:
                 self.root = MCTSNode(copy.deepcopy(self.board))
                 
         # time count
-        start_time = timer()
-        time_remaining:float = referee["time_remaining"] # type: ignore
-        estimate_turns = self.root.rollout_turns()
-        estimation_cost = timer() - start_time
-        estimated_time = (time_remaining - estimation_cost) / estimate_turns
-        print("Time left: ", time_remaining - estimation_cost)
-        print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
+        if referee:
+            start_time = timer()
+            time_remaining:float = referee["time_remaining"] # type: ignore
+            estimate_turns = self.root.rollout_turns()
+            estimation_cost = timer() - start_time
+            estimated_time = (time_remaining - estimation_cost) / estimate_turns
+            print("Time left: ", time_remaining - estimation_cost)
+            print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
+        else:
+            estimated_time = 10000
 
         if len(self.root.my_actions) > 200:
             return self.random_move()
