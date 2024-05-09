@@ -18,7 +18,7 @@ python -m referee -s 250 -t 180.0 -c agent_random agent_mcts
 
 1. python -m pip install snakeviz
 
-2. python -m cProfile -o test.prof test.py [agent] [agent]
-(e.g python -m cProfile -o test.prof test.py agent_random agent_mcts)
+2. python test.py [agent] [agent]
+(e.g python test.py agent_random agent_mcts)
 
 3. snakeviz test.prof
