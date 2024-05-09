@@ -84,7 +84,7 @@ class Agent:
         # print(self.root.board.render(True))
 
     def init(self, color: PlayerColor):
-        self.board = SimBoard()
+        self.board = BitBoard()
         self.color = color
         self.root = None
         self.name = "Agent_MCTS " + self.color.name
