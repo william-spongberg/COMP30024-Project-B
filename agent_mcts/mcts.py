@@ -1,4 +1,3 @@
-import copy
 import random
 from math import log
 from collections import defaultdict
@@ -76,7 +75,7 @@ class MCTSNode:
         Expand the current node by adding a new child node
         Using opponent move as action
         """
-        board_node: SimBoard = copy.deepcopy(self.board)
+        board_node: SimBoard = self.board.copy()
 
         # print(action)
         board_node.apply_action(action)

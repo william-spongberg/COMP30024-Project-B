@@ -79,7 +79,6 @@ class SimBoard:
         self._state: dict[Coord, CellState] = init_state
         self._turn_color: PlayerColor = init_color
         self._turn_count: int = 0
-        self._actions: list[Action]
 
     def apply_action(self, action: Action | None = None):
         """
@@ -153,6 +152,11 @@ class SimBoard:
                 output += " "
             output += "\n"
         return output
+    
+    def copy(self):
+        new_board = SimBoard(self._state.copy(), self._turn_color)
+        new_board._turn_count = self._turn_count
+        return new_board
 
     def __getitem__(self, coord: Coord) -> CellState:
         return self._state[coord]

@@ -1,7 +1,6 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing self
 
-import copy
 import gc
 import random
 
@@ -40,7 +39,7 @@ class Agent:
             return generate_random_move(self.board.state, self.color, first_turns=True)
         else:
             if not self.root:
-                self.root = MCTSNode(copy.deepcopy(self.board))
+                self.root = MCTSNode(self.board.copy())
                 
         # time count
         if referee:
