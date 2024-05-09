@@ -270,12 +270,17 @@ class MCTSNode:
         params: node: node to keep as it will be the new root
         """
         if (node):
+            # main branch
             for child in self.__action_to_children.values():
+                # child node to keep, all children of this node will be saved
                 if node and child == node:
                     continue
                 else:
+                    # recursively delete all other children
                     child.chop_nodes_except()
         else:
+            for child in self.__action_to_children.values():
+                child.chop_nodes_except()
             del self.__action_to_children
             del self.board
             del self.parent
