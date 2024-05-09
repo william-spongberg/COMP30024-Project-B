@@ -4,6 +4,7 @@ import sys
 
 from agent_mcts.program import AgentMCTS
 from agent_random.program import AgentRandom
+from helpers.bit_board import BitBoard
 from helpers.sim_board import SimBoard
 from helpers.tetrominoes import test_tetronimoes
 from referee.game.board import Board
@@ -50,7 +51,7 @@ def check_agent_state(agent_blue, game_state):
 def play_game():
     # test_tetronimoes()
     agent_red, agent_blue = get_agents()
-    game_state: SimBoard = SimBoard()
+    game_state: BitBoard = BitBoard()
 
     # play game until over
     while not game_state.game_over:
