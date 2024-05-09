@@ -71,15 +71,31 @@ class BitBoard:
         col_coords = [c for c in self._col_occupied(coord) if self._cell_occupied(c)]
         return row_coords + col_coords
 
+    def apply_ansi(self, str, bold=True, color=None):
+        bold_code = "\033[1m" if bold else ""
+        color_code = ""
+        if color == "r":
+            color_code = "\033[31m"
+        if color == "b":
+            color_code = "\033[34m"
+        return f"{bold_code}{color_code}{str}\033[0m"
+    
     def render(self, use_color: bool = False) -> str:
         output = ""
         for r in range(BOARD_N):
             for c in range(BOARD_N):
                 index = r * BOARD_N + c
-                if (self.red_state >> index) & 1:
-                    output += "r "
-                elif (self.blue_state >> index) & 1:
-                    output += "b "
+                color = None
+                if self._cell_occupied(Coord(r, c)):
+                    if (self.red_state >> index) & 1:
+                        color = "r"
+                    elif (self.blue_state >> index) & 1:
+                        color = "b"
+                    text = f"{color} "
+                    if use_color:
+                        output += self.apply_ansi(str=text, bold=True, color=color)
+                    else:
+                        output += text
                 else:
                     output += ". "
             output += "\n"
