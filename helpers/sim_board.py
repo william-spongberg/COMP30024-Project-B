@@ -244,4 +244,3 @@ class SimBoard:
                 else PlayerColor.BLUE
             )
 
-    # TODO: what happens on turn_limit_reached?

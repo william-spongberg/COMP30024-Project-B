@@ -17,8 +17,8 @@ from referee.game import (
     Coord,
 )
 
-NARROW_SIM_NO = 80
-WIDE_SIM_NO = 40
+NARROW_SIM_NO = 120
+WIDE_SIM_NO = 100
 BACKUP_TIME = 10
 # MAX_STEPS = 10 # not used, should modify MCTS class to use this
 
@@ -61,12 +61,12 @@ class Agent:
         if len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
             action = self.root.best_action(estimated_time,
-                max((int)(len(self.root.my_actions) / 2), WIDE_SIM_NO)
+                max((int)(len(self.root.my_actions)*1.5), WIDE_SIM_NO)
             )
         else:
             # take it serious on intensive situations
             action = self.root.best_action(estimated_time,
-                max((int)(len(self.root.my_actions)), NARROW_SIM_NO)
+                max((int)(len(self.root.my_actions)*2), NARROW_SIM_NO)
             )
 
         if action:

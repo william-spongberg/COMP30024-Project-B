@@ -16,12 +16,8 @@ from timeit import default_timer as timer
 # generally want to make more efficient (want at least 100 sims per move)
 # TODO: implement asynchronous MCTS to allow searching to continue while waiting for opponent move
 # not allowed in specifcation?
-# TODO: remove as many checks as possible to increase efficiency
-# TODO: debug invalid actions being generated (non-adjacent)
-# TODO: implement mcts time limit
 
-MAX_STEPS = 6
-
+MAX_STEPS = 8
 CLOSE_TO_END = 100
 
 class MCTSNode:
