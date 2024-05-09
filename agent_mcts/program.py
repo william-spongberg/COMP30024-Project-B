@@ -1,6 +1,7 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing self
 
+import copy
 import gc
 import random
 
@@ -19,11 +20,14 @@ NARROW_SIM_NO = 80
 WIDE_SIM_NO = 40
 # MAX_STEPS = 10 # not used, should modify MCTS class to use this
 
+
 class Agent:
 
     # attributes
     board: SimBoard  # state of game
-    root: MCTSNode | None  # root node of MCTS tree NOTE: not to initialise until after first two turns
+    root: (
+        MCTSNode | None
+    )  # root node of MCTS tree NOTE: not to initialise until after first two turns
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
 
@@ -35,26 +39,24 @@ class Agent:
             return generate_random_move(self.board.state, self.color, first_turns=True)
         else:
             if not self.root:
-                self.root = MCTSNode(self.board)
-        
+                self.root = MCTSNode(copy.deepcopy(self.board))
+
         if len(self.root.my_actions) > 200:
             return self.random_move()
+
+        # action = self.root.best_action(5)
         if len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
-            action = self.root.best_action(max((int)(len(self.root.my_actions)/2), WIDE_SIM_NO))
+            action = self.root.best_action(
+                max((int)(len(self.root.my_actions) / 2), WIDE_SIM_NO)
+            )
         else:
             # take it serious on intensive situations
-            action = self.root.best_action(max((int)(len(self.root.my_actions)), NARROW_SIM_NO))
-        
+            action = self.root.best_action(
+                max((int)(len(self.root.my_actions)), NARROW_SIM_NO)
+            )
+
         if action:
-            # temp fix for invalid actions
-            if not check_adjacent_cells(action.coords, self.board.state, self.color):
-                print("Invalid action: ", action)
-                print("state: ", self.board.state)
-                exit(1)
-                # self.root.untried_actions.remove(action)
-                # self.root.my_actions.remove(action)
-                # return self.action()
             self.root.my_actions.remove(action)
             return action
         return self.random_move()
@@ -80,23 +82,26 @@ class Agent:
 
     def random_move(self) -> Action:
         action = random.choice(list(self.available_moves))
-        if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
+        if not is_valid(self.board.state, action) or not check_adjacent_cells(
+            action.coords, self.board.state, self.color
+        ):
             print("Invalid action: ", action)
-            print("state: ", self.board.state)
+            print("state: ", self.board.render())
             exit(1)
             # self.available_moves.remove(action)
             # return self.random_move()
         return action
-    
+
     async def async_thinking(self):
         # TODO: implement async thinking no matter who is taking the turn
         pass
-    
+
     @property
     def available_moves(self) -> list[Action]:
         if self.root:
             return self.root.my_actions
         return []
+
 
 class AgentMCTS:
     # wrap Agent class
