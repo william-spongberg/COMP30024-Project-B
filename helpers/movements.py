@@ -18,7 +18,10 @@ def is_valid(state: dict[Coord, CellState], piece: Action) -> bool:
             return False
     return True
 
-def check_adjacent_cells(coords: list[Coord], state: dict[Coord, CellState], color: PlayerColor) -> bool:
+
+def check_adjacent_cells(
+    coords: list[Coord], state: dict[Coord, CellState], color: PlayerColor
+) -> bool:
     """
     Check if the given coordinates have any adjacent cells of the same color
     """
@@ -28,40 +31,42 @@ def check_adjacent_cells(coords: list[Coord], state: dict[Coord, CellState], col
                 return True
     return False
 
-def generate_random_move(state: dict[Coord, CellState], color: PlayerColor, first_turns: bool=False) -> Action:
+
+def generate_random_move(
+    state: dict[Coord, CellState], color: PlayerColor, first_turns: bool = False
+) -> Action:
     """
     Generate a random move for a given state and player colour.
     """
     if first_turns and color == PlayerColor.RED:
-            return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
+        return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
     coords = valid_coords(state, color, first_turns)
     coord = random.choice(coords)
     coords.remove(coord)
 
     # try all available coords
-    while not valid_moves(state, coord):
-        if coords:
-            coord = random.choice(coords)
-            coords.remove(coord)
-        else:
+    while True:
+        moves = valid_moves(state, coord)
+        if moves or not coords:
             break
-    moves = valid_moves(state, coord)
+        coord = random.choice(coords)
+        coords.remove(coord)
+
     # if no valid moves available
     if not moves:
-        return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
+        print("no valid moves available")
+        exit(1)
+        # return None
 
     # prints to track valid moves generated
-    print(
-        f"generated {len(moves)} valid moves at {coord}"
-    )
-    # for move in valid_moves(state, coord):
-    #     print(move)
+    print(f"generated {len(moves)} valid moves at {coord}")
 
     # return random move
     return random.choice(moves)
 
+
 def valid_coords(
-    state: dict[Coord, CellState], player_colour: PlayerColor, first_turns: bool=False
+    state: dict[Coord, CellState], player_colour: PlayerColor, first_turns: bool = False
 ) -> list[Coord]:
     """
     Get all valid adjacent coordinates for a player's state.
@@ -97,28 +102,35 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     """
     Get all possible valid tetrominoes at a given coordinate for a given state.
     """
-    return [
-        Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
-        for tetromino in tetrominoes
-        if is_valid(
-            state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
-        )
-    ]
-    
-def valid_moves_of_any_empty(state: dict[Coord, CellState], coord:Coord, color: PlayerColor) -> list[Action]:
-    if (state[coord].player is not None):
-        print("invalid coord")
-        exit()
-    return [move for move in valid_moves(state, coord) if check_adjacent_cells(move.coords, state, color)]
+    valid_moves = []
+    for tetromino in tetrominoes:
+        action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        if is_valid(state, action):
+            valid_moves.append(action)
+    return valid_moves
 
-def has_valid_move(state: dict[Coord, CellState], coord: Coord, color: PlayerColor) -> bool:
+
+def valid_moves_of_any_empty(
+    state: dict[Coord, CellState], coord: Coord, color: PlayerColor
+) -> list[Action]:
+    if state[coord].player is not None:
+        print("invalid coord")
+        exit(1)
+    return [
+        move
+        for move in valid_moves(state, coord)
+        if check_adjacent_cells(move.coords, state, color)
+    ]
+
+
+def has_valid_move(
+    state: dict[Coord, CellState], coord: Coord, color: PlayerColor
+) -> bool:
     """
     Check there is at least one valid move available.
     """
     for tetromino in tetrominoes:
-        if is_valid(
-            state,
-            Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
-        ):
+        action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        if is_valid(state, action):
             return True
     return False
