@@ -44,7 +44,7 @@ class MCTSNode:
             self.my_actions = parent.parent.my_actions.copy()
             self.my_actions = update_actions(parent.parent.board.state, self.board.state, self.my_actions, board.turn_color)
         else:
-            print("no parent")
+            # print("no parent")
             self.my_actions = find_actions(board.state, board.turn_color)
             
         self.untried_actions = self.my_actions.copy() # actions not yet tried
@@ -188,7 +188,7 @@ class MCTSNode:
                 # met bug about expanding invalid action haven't fixed yet but this can be a temporary solution
                 if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
                     print("Invalid action: ", action)
-                    print("state: ", self.board.state)
+                    print("state: ", self.board.render())
                     exit(1)
                     #self.my_actions.remove(action)
                     #return self._tree_policy()
@@ -214,7 +214,7 @@ class MCTSNode:
                 return None
             # simulation
             # print("simulating")
-            print("rolling out: ", i)
+            #print("rolling out: ", i)
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
@@ -296,4 +296,5 @@ class MCTSNode:
             return self.__action_to_children[action]
         else:
             self.expand(action)
+            # print("had to expand")
             return self.__action_to_children[action]
