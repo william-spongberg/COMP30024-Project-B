@@ -18,8 +18,6 @@ from referee.game import (
     Coord,
 )
 
-# NARROW_SIM_NO = 200
-# WIDE_SIM_NO = 200
 WIDE_SIM_NO = 100
 MEDIUM_SIM_NO = 120
 NARROW_SIM_NO = 150
@@ -27,8 +25,6 @@ BACKUP_TIME = 5
 WIDE_DEPTH = 2
 MEDIUM_DEPTH = 4
 NARROW_DEPTH = 6
-# MAX_STEPS = 10 # not used, should modify MCTS class to use this
-
 
 class Agent:
 
