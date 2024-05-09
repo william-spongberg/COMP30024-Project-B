@@ -49,10 +49,12 @@ class Agent:
         if action:
             # temp fix for invalid actions
             if not check_adjacent_cells(action.coords, self.board.state, self.color):
-                self.root.untried_actions.remove(action)
-                self.root.my_actions.remove(action)
-                print(f"Invalid action: {action}")
-                return self.action()
+                print("Invalid action: ", action)
+                print("state: ", self.board.state)
+                exit(1)
+                # self.root.untried_actions.remove(action)
+                # self.root.my_actions.remove(action)
+                # return self.action()
             return action
         return self.random_move()
 
@@ -78,8 +80,11 @@ class Agent:
     def random_move(self) -> Action:
         action = random.choice(list(self.available_moves))
         if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
-            self.available_moves.remove(action)
-            return self.random_move()
+            print("Invalid action: ", action)
+            print("state: ", self.board.state)
+            exit(1)
+            # self.available_moves.remove(action)
+            # return self.random_move()
         return action
     
     async def async_thinking(self):
