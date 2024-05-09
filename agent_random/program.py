@@ -4,6 +4,7 @@
 import copy
 import random
 
+from helpers.bit_board import BitBoard
 from helpers.sim_board import SimBoard
 from helpers.movements import generate_random_move
 from referee.game import PlayerColor, Action, Action
@@ -12,7 +13,7 @@ from referee.game import PlayerColor, Action, Action
 class Agent:
 
     # attributes
-    board: SimBoard  # state of game
+    board: BitBoard  # state of game
     color: PlayerColor  # agent colour
     name: str  # agent name
     opponent: PlayerColor  # agent opponent
@@ -29,7 +30,7 @@ class Agent:
         self.board.apply_action(action)
 
     def init(self, color: PlayerColor):
-        self.board = SimBoard()
+        self.board = BitBoard()
         self.color = color
         self.name = "Agent_Random " + self.color.name
         self.opponent = self.color.opponent
