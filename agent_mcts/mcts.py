@@ -1,6 +1,7 @@
 import copy
 import random
 from math import log
+from math import log
 from collections import defaultdict
 import warnings
 
@@ -8,6 +9,7 @@ from helpers.movements import check_adjacent_cells, is_valid
 from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
 from referee.game.board import CellState
+from referee.game.constants import MAX_TURNS
 from referee.game.coord import Coord
 from referee.game.player import PlayerColor
 
@@ -96,24 +98,24 @@ class MCTSNode:
             return True
         return False
 
-    def rollout(self) -> "MCTSNode | None":
+    def rollout_turns(self) -> int:
         """
         Simulate a random v random game from the current node
         """
-        # push_step = 0
+        push_step = 0
         current_node = self
         while not current_node.is_terminal_node():
             # light playout policy
             current_node = current_node._tree_policy()
-            # push_step += 1
+            push_step += 1
             # print("pushing step: ", push_step)
             if not current_node:
                 warnings.warn("ERROR: No tree policy node found in rollout")
-                return None
-
-        return current_node
-
-    def new_rollout(self, max_steps) -> "MCTSNode | None":
+                return MAX_TURNS
+        current_node.backpropagate(current_node.board.winner, self.color)
+        return push_step
+    
+    def new_rollout(self, max_steps) -> 'MCTSNode | None':
         """
         Simulate a random v random game from the current node
         not pushing all the way to the end of the game but stopping at max_steps
