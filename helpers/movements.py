@@ -109,12 +109,7 @@ def valid_moves_of_any_empty(state: dict[Coord, CellState], coord:Coord, color: 
     if (state[coord].player is not None):
         print("invalid coord")
         exit()
-    result = []
-    for tetromino in tetrominoes:
-        action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
-        if is_valid(state, action) and check_adjacent_cells(action.coords, state, color):
-            result.append(action)
-    return result
+    return [move for move in valid_moves(state, coord) if check_adjacent_cells(move.coords, state, color)]
 
 def has_valid_move(state: dict[Coord, CellState], coord: Coord, color: PlayerColor) -> bool:
     """

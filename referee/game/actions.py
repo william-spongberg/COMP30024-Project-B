@@ -29,6 +29,9 @@ class PlaceAction():
             return f"PLACE({self.c1}, {self.c2}, {self.c3}, {self.c4})"
         except:
             return f"PLACE(<invalid coords>)"
+    
+    def __eq__(self, value: 'PlaceAction') -> bool:
+        return set(self.coords) == set(value.coords)
 
 
 Action = PlaceAction
