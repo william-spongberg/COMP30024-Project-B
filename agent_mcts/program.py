@@ -41,6 +41,9 @@ class Agent:
             if not self.root:
                 self.root = MCTSNode(self.board.copy())
                 
+        if len(self.root.my_actions) > 200:
+            return self.random_move()
+        
         # time count
         if referee:
             start_time = timer()
@@ -53,10 +56,6 @@ class Agent:
         else:
             estimated_time = 10000
 
-        if len(self.root.my_actions) > 200:
-            return self.random_move()
-
-        # action = self.root.best_action(5)
         if len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
             action = self.root.best_action(estimated_time,
