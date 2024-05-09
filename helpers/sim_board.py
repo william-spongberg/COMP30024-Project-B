@@ -1,9 +1,9 @@
 from .heuristics import BOARD_N
-from .movements import has_valid_move, valid_coords, valid_moves
+from .movements import has_valid_move, valid_coords, valid_moves, valid_moves_of_any_empty, is_valid, check_adjacent_cells
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
-from referee.game.coord import Coord
+from referee.game.coord import Coord, Direction
 from referee.game.player import PlayerColor
 
 
@@ -17,6 +17,34 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
         actions.extend(valid_moves(state, coord))
     return actions
 
+def update_actions(prev_state: dict[Coord, CellState], 
+                   new_state: dict[Coord, CellState], my_actions: list[Action], color: PlayerColor):
+    """
+    Get a new list of actions that are valid for the current state
+    """
+    action_to_remove_in_my_actions = []
+    for action in my_actions:
+        if not is_valid(new_state, action) or not check_adjacent_cells(action.coords, new_state, color):
+            action_to_remove_in_my_actions.append(action)
+    for action_remove in action_to_remove_in_my_actions:
+        my_actions.remove(action_remove)
+    for coord in changed_coords(prev_state, new_state):
+        # two situations: new empty/new needed color
+        if new_state[coord].player is None:
+            my_actions.extend(valid_moves_of_any_empty(new_state, coord, color))
+        elif new_state[coord].player == color:
+            # looking for empty adjacent cells
+            for adjacent in [coord + dir for dir in Direction]:
+                if new_state[adjacent].player is None:
+                    my_actions.extend(valid_moves(new_state, adjacent))
+    my_actions = list(set(my_actions))
+    return
+        
+def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
+    """
+    Get all coordinates that have changed
+    """
+    return [coord for coord in state.keys() if state[coord].player != new_state[coord].player]   
 
 def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """

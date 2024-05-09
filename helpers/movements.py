@@ -17,6 +17,17 @@ def is_valid(state: dict[Coord, CellState], piece: Action) -> bool:
     return True
 
 
+def check_adjacent_cells(coords: list[Coord], state: dict[Coord, CellState], color: PlayerColor) -> bool:
+    """
+    Check if the given coordinates have any adjacent cells of the same color
+    """
+    for coord in coords:
+        for dir in Direction:
+            if state[coord + dir].player == color:
+                return True
+    return False
+
+
 def valid_coords(
     state: dict[Coord, CellState], player_colour: PlayerColor
 ) -> list[Coord]:
@@ -61,6 +72,12 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
             state, Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         )
     ]
+
+def valid_moves_of_any_empty(state: dict[Coord, CellState], coord:Coord, color: PlayerColor) -> list[Action]:
+    if (state[coord].player is not None):
+        print("invalid coord")
+        exit()
+    return [move for move in valid_moves(state, coord) if check_adjacent_cells(move.coords, state, color)]
 
 
 def has_valid_move(state: dict[Coord, CellState], coord: Coord) -> bool:

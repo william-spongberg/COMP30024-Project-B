@@ -5,7 +5,7 @@ from collections import defaultdict
 import warnings
 
 from helpers.movements import valid_coords, valid_moves
-from helpers.sim_board import SimBoard, find_actions
+from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.coord import Coord
@@ -17,7 +17,6 @@ from referee.game.player import PlayerColor
 # TODO: remove as many checks as possible to increase efficiency
 # TODO: add transposition table to store board states and results, avoids re-searching same states
 
-total_actions: set[Action] = set()
 
 
 class MCTSNode:
@@ -29,7 +28,7 @@ class MCTSNode:
         self,
         state: dict[Coord, CellState],
         color: PlayerColor = PlayerColor.RED,
-        parent=None,
+        parent: 'MCTSNode|None'=None,
         parent_action=None,
     ):
         """
@@ -39,47 +38,42 @@ class MCTSNode:
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
         
-        self.actions: list[Action] = find_actions(
-            self.board._state, self.board._turn_color
-        )
-        total_actions.update(self.actions)
+        if parent and parent.actions:
+            self.actions: list[Action] = parent.actions.copy()
+            update_actions(parent.board.state, self.board.state, self.actions, color)
+        else:
+            self.actions = find_actions(state, color)
+            
+        if parent and parent.opp_actions:
+            self.opp_actions: list[Action] = parent.opp_actions.copy()
+            update_actions(parent.board.state, self.board.state, self.opp_actions, color.opponent)
+        else:
+            self.opp_actions = find_actions(state, color.opponent)
+            
+        self.untried_actions: list[Action] = self.actions
+            
         self.action_to_children : dict[Action, MCTSNode] = {}
-        self.children: list[MCTSNode] = []
         
         self.color: PlayerColor = color
         self.num_visits = 0
-        self.heuristic_value : float | None = None
         
         self.results = defaultdict(int)
         self.results[1] = 0  # win
-        self.results[-1] = 0  # loss
 
-    def expand(self):
+    def expand(self, action: Action):
         """
         Expand the current node by adding a new child node
         """
         board_node: SimBoard = copy.deepcopy(self.board)
-        action = self.actions.pop()
-        # print(action)
         board_node.apply_action(action)
         # print(board_node)
         child_node: MCTSNode = MCTSNode(
             board_node._state, self.color, parent=self, parent_action=action
         )
 
-        self.children.append(child_node)
+        self.action_to_children[action] = child_node
         return child_node
     
-    def add_action(self, action: Action):
-        """
-        Add action to children
-        """
-        self.board.apply_action(action)
-        
-        # TODO: in future keep track of all previous actions, useful for ML?
-        
-        # TODO: check if action already exists in children
-        self.children = []
 
     def is_terminal_node(self):
         return self.board.game_over
@@ -88,32 +82,24 @@ class MCTSNode:
         # print(len(self.actions))
         return len(self.actions) == 0
 
-    def rollout(self) -> PlayerColor | None:
-        """
-        Simulate a random v random game from the current node
-        """
-        current_board: SimBoard = copy.deepcopy(self.board)
-        while not current_board.game_over:
-            # light playout policy
-            """ 
-            # TODO: wrong logic here, the num of actions change over the rollout, but fixing this causes really bad efficiency
-            # But better to develop consist tree first, heuristics are bad in efficiency generally
-            # if len(self.actions) > 50:
-            #     action = self.get_random_move(current_board)
-            # else:
-            #     action = self.get_heuristic_based_move(current_board)
-            """
-            action = self.get_random_move(current_board)
-            # if action available, apply
-            if action:
-                current_board.apply_action(action)
-                # print(current_board.render())
-            # if no action available, should not be in this loop (but anyway return opponent as winner)
-            else:
-                warnings.warn("ERROR: No action available in rollout but not game over yet")
-                return current_board._turn_color.opponent
+    # def rollout(self) -> PlayerColor | None:
+    #     """
+    #     Simulate a random v random game from the current node
+    #     """
+    #     current_board: SimBoard = copy.deepcopy(self.board)
+    #     while not current_board.game_over:
+    #         # light playout policy
+    #         action = self.get_random_move(current_board)
+    #         # if action available, apply
+    #         if action:
+    #             current_board.apply_action(action)
+    #             # print(current_board.render())
+    #         # if no action available, should not be in this loop (but anyway return opponent as winner)
+    #         else:
+    #             warnings.warn("ERROR: No action available in rollout but not game over yet")
+    #             return current_board._turn_color.opponent
         
-        return current_board.winner
+    #     return current_board.winner
     
     def new_rollout(self, max_steps) -> PlayerColor | None:
         """
@@ -123,13 +109,20 @@ class MCTSNode:
         current_board: SimBoard = copy.deepcopy(self.board)
         steps = 0
         color = current_board._turn_color
-        if not self.heuristic_value:
-            self.heuristic_value = self.board_heuristic(current_board.state, self.color)
+        updating_actions = self.actions.copy()
+        opp_actions = self.opp_actions.copy()
         while steps < max_steps and not current_board.game_over:
+            print("step: ", steps)
             # light playout policy
-            action = self.get_random_move(current_board)
+            if current_board._turn_color == color:
+                action = self.get_random_move(updating_actions)
+            else:
+                action = self.get_random_move(opp_actions)
             if action:
+                prev_state = current_board._state.copy()
                 current_board.apply_action(action)
+                update_actions(prev_state, current_board._state, updating_actions, color)
+                update_actions(prev_state, current_board._state, opp_actions, color.opponent)
                 steps += 1
             else:
                 warnings.warn("ERROR: No action available in rollout but not game over yet")
@@ -137,7 +130,8 @@ class MCTSNode:
         if (current_board.winner):
             return current_board.winner
         else:
-            return color if self.board_heuristic(current_board.state, self.color) > self.heuristic_value else color.opponent
+            return color if (len(updating_actions) - len(opp_actions) > 
+                    len(self.actions) - len(find_actions(self.board._state, self.color.opponent))) else color.opponent
             
 
     def backpropagate(self, result):
@@ -155,7 +149,7 @@ class MCTSNode:
         """
         best_score: float = float("-inf")
         best_child = None
-        for child in self.children:
+        for child in self.action_to_children.values():
             if child.num_visits == 0 or self.num_visits == 0:
                 exploit: float = child.results[1]
                 explore: float = 0.0
@@ -186,7 +180,9 @@ class MCTSNode:
         # select nodes to expand
         while current_node and not current_node.is_terminal_node():
             if not current_node.is_fully_expanded():
-                return current_node.expand()
+                action = random.choice(current_node.untried_actions)
+                current_node.untried_actions.remove(action)
+                return current_node.expand(action)
             else:
                 current_node = current_node.best_child()
         return current_node
@@ -195,7 +191,7 @@ class MCTSNode:
         """
         Perform MCTS search for the best action
         """
-        for _ in range(sim_no):
+        for i in range(sim_no):
             # expansion
             v: MCTSNode | None = self._tree_policy()
             if not v:
@@ -204,7 +200,8 @@ class MCTSNode:
             # simulation
             # print("simulating")
             # reward = v.rollout()
-            reward = v.new_rollout(4)
+            print("rolling out", i)
+            reward = v.new_rollout(10)
             if not reward:
                 print("ERROR: No winner found")
                 return None
@@ -226,69 +223,64 @@ class MCTSNode:
         print("ERROR: No best child found")
         return None
 
-    def get_random_move(self, board) -> Action | None:
+    def get_random_move(self, actions: list[Action]) -> Action | None:
         """
         Get a random move for the current state
         """
-        state: dict[Coord, CellState] = board.state
+        if self.board.turn_count < 2:
+            return random.choice(find_actions(self.board._state, self.color))
+        return random.choice(actions)
+    
+    def update(self, action: Action):
+        """
+        Update the MCTS tree with the opponent's move
+        """
+        if action in self.action_to_children:
+            self = self.action_to_children[action]
+        else:
+            self.expand(action)
+            self.update(action)
 
-        coords = valid_coords(state, board.turn_color)
-        coord: Coord = random.choice(coords)
-        coords.remove(coord)
-
-        # try all available coords
-        while not valid_moves(state, coord):
-            if coords:
-                coord = random.choice(coords)
-                coords.remove(coord)
-            else:
-                break
-        # if no valid moves available
-        if not valid_moves(state, coord):
-            return None
-        # else return random valid move
-        return random.choice(valid_moves(state, coord))
-
-    def heuristic(self, move: Action, board: SimBoard):
-        # TODO: copy state instead of whole board for better efficiency
-        current_board = copy.deepcopy(board)
-        coords = valid_coords(current_board._state, current_board._turn_color)
-        move_count = 0
-        for coord in coords:
-            move_count += len(valid_moves(current_board._state, coord))
-        current_board.apply_action(move)
-        opp_coords = valid_coords(current_board._state, current_board._turn_color)
-        opp_move_count = 0
-        for coord in opp_coords:
-            opp_move_count += len(valid_moves(current_board._state, coord))
-        return (
-            move_count - opp_move_count + len(coords) - len(opp_coords)
-        )  # bigger is better
+    # def heuristic(self, move: Action, board: SimBoard):
+    #     # TODO: copy state instead of whole board for better efficiency
+    #     current_board = copy.deepcopy(board)
+    #     coords = valid_coords(current_board._state, current_board._turn_color)
+    #     move_count = 0
+    #     for coord in coords:
+    #         move_count += len(valid_moves(current_board._state, coord))
+    #     current_board.apply_action(move)
+    #     opp_coords = valid_coords(current_board._state, current_board._turn_color)
+    #     opp_move_count = 0
+    #     for coord in opp_coords:
+    #         opp_move_count += len(valid_moves(current_board._state, coord))
+    #     return (
+    #         move_count - opp_move_count + len(coords) - len(opp_coords)
+    #     )  # bigger is better
         
-    def board_heuristic(self, state: dict[Coord, CellState], color: PlayerColor):
-        """
-        heuristic function to predict if this player is winning
-        """
-        move_count = len(find_actions(state, color))
-        opp_move_count = len(find_actions(state, color.opponent))
-        return (
-            move_count - opp_move_count
-        )  # bigger is better
+    # def board_heuristic(self, state: dict[Coord, CellState], color: PlayerColor):
+    #     """
+    #     heuristic function to predict if this player is winning
+    #     """
+    #     move_count = len(find_actions(state, color))
+    #     opp_move_count = len(find_actions(state, color.opponent))
+    #     return (
+    #         move_count - opp_move_count
+    #     )  # bigger is better
 
-    def get_heuristic_based_move(self, board: SimBoard) -> Action | None:
-        best_move = None
-        best_heuristic = float("-inf")
-        state = board._state
+    # def get_heuristic_based_move(self, board: SimBoard) -> Action | None:
+    #     best_move = None
+    #     best_heuristic = float("-inf")
+    #     state = board._state
 
-        coords = valid_coords(state, board._turn_color)
-        coord: Coord = random.choice(coords)
-        coords.remove(coord)
+    #     coords = valid_coords(state, board._turn_color)
+    #     coord: Coord = random.choice(coords)
+    #     coords.remove(coord)
 
-        for coord in coords:
-            moves = valid_moves(state, coord)
-            for move in moves:
-                heuristic = self.heuristic(move, board)
-                if heuristic > best_heuristic:
-                    best_heuristic = heuristic
-                    best_move = move
-        return best_move
+    #     for coord in coords:
+    #         moves = valid_moves(state, coord)
+    #         for move in moves:
+    #             heuristic = self.heuristic(move, board)
+    #             if heuristic > best_heuristic:
+    #                 best_heuristic = heuristic
+    #                 best_move = move
+    #     return best_move

@@ -14,6 +14,7 @@ from referee.game import (
     Action,
     Action,
     Coord,
+    actions,
 )
 from referee.game.board import Board
 
@@ -41,10 +42,7 @@ class Agent:
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
-        # TODO: update MCTS tree every turn
-        self.root.add_action(action)
-        print(self.root.board.render(True))
-        # print(self.board.render(True))
+        self.root.update(action)
 
     def init(self, color: PlayerColor):
         self.board = SimBoard()
