@@ -1,6 +1,6 @@
 import copy
 import random
-from cmath import log
+from math import log
 from collections import defaultdict
 import warnings
 
@@ -20,14 +20,16 @@ from referee.game.player import PlayerColor
 
 MAX_STEPS = 6
 
+
 class MCTSNode:
     """
     Node class for the Monte Carlo Tree Search algorithm
     """
+
     def __init__(
         self,
         board: SimBoard,
-        parent: 'MCTSNode | None' = None,
+        parent: "MCTSNode | None" = None,
         parent_action: Action | None = None,
     ):
         """
@@ -36,29 +38,36 @@ class MCTSNode:
         self.board: SimBoard = board
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
-        
+
         self.my_actions: list[Action]
 
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
-            self.my_actions = update_actions(parent.parent.board.state, self.board.state, self.my_actions, board.turn_color)
+            self.my_actions = update_actions(
+                parent.parent.board.state,
+                self.board.state,
+                self.my_actions,
+                board.turn_color,
+            )
         else:
             # print("no parent")
             self.my_actions = find_actions(board.state, board.turn_color)
-            
-        self.untried_actions = self.my_actions.copy() # actions not yet tried
-        self.__action_to_children: dict[Action, 'MCTSNode'] = {} # my actions to child node
-        
+
+        self.untried_actions = self.my_actions.copy()  # actions not yet tried
+        self.__action_to_children: dict[Action, "MCTSNode"] = (
+            {}
+        )  # my actions to child node
+
         self.color: PlayerColor = board.turn_color
         self.num_visits = 0
-        
+
         self.results = defaultdict(int)
         self.results[1] = 0  # win
         # self.results[-1] = 0  # loss
-        
+
         self.danger = False
-        self.winning_color:PlayerColor|None = None
+        self.winning_color: PlayerColor | None = None
 
     def expand(self, action: Action):
         """
@@ -71,7 +80,9 @@ class MCTSNode:
         board_node.apply_action(action)
         # print(board_node)
         child_node: MCTSNode = MCTSNode(
-            board_node, parent=self, parent_action=action,
+            board_node,
+            parent=self,
+            parent_action=action,
         )
 
         self.__action_to_children[action] = child_node
@@ -85,24 +96,24 @@ class MCTSNode:
             return True
         return False
 
-    def rollout(self) -> 'MCTSNode | None':
+    def rollout(self) -> "MCTSNode | None":
         """
         Simulate a random v random game from the current node
         """
-        #push_step = 0
+        # push_step = 0
         current_node = self
         while not current_node.is_terminal_node():
             # light playout policy
             current_node = current_node._tree_policy()
-            #push_step += 1
+            # push_step += 1
             # print("pushing step: ", push_step)
             if not current_node:
                 warnings.warn("ERROR: No tree policy node found in rollout")
                 return None
-        
+
         return current_node
-    
-    def new_rollout(self, max_steps) -> 'MCTSNode | None':
+
+    def new_rollout(self, max_steps) -> "MCTSNode | None":
         """
         Simulate a random v random game from the current node
         not pushing all the way to the end of the game but stopping at max_steps
@@ -129,7 +140,6 @@ class MCTSNode:
         else:
             current_node.winning_color = self.color.opponent
         return current_node
-            
 
     def backpropagate(self, result: PlayerColor | None, root_color: PlayerColor):
         """
@@ -144,27 +154,22 @@ class MCTSNode:
             self.parent.danger = self.danger
             self.parent.backpropagate(result, root_color)
 
-    def best_child(self, c_param=1.4) -> 'MCTSNode':
+    def best_child(self, c_param=1.4) -> "MCTSNode":
         """
         Select the best child node based on the UCB1 formula
         """
         best_score: float = float("-inf")
         best_child = None
         for child in self.__action_to_children.values():
-            if child.num_visits == 0 or self.num_visits == 0:
+            if child.num_visits <= 0 or self.num_visits <= 0:
                 exploit: float = child.results[1]
                 explore: float = 0.0
             else:
                 exploit: float = child.results[1] / child.num_visits
-                # TODO: fix potential error here in abs causing bad results
-                if (self.num_visits) < 1 or (child.num_visits) < 1:
-                    print("ERROR: abnormal num_visits")
-                    print("num_visits: ", self.num_visits)
-                    print("child.num_visits: ", child.num_visits)
-                    exit()
                 explore: float = (
-                    c_param * abs(2 * log(self.num_visits) / child.num_visits) ** 0.5
+                    c_param * 2 * (log(self.num_visits) / child.num_visits) ** 0.5
                 )
+
             score: float = exploit + explore
             if score > best_score:
                 best_score = score
@@ -175,7 +180,6 @@ class MCTSNode:
             exit()
         return best_child
 
-    
     def _tree_policy(self):
         """
         Select a node to expand based on the tree policy
@@ -185,19 +189,12 @@ class MCTSNode:
             if not self.is_fully_expanded():
                 action = random.choice(self.untried_actions)
                 self.untried_actions.remove(action)
-                # met bug about expanding invalid action haven't fixed yet but this can be a temporary solution
-                if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
-                    print("Invalid action: ", action)
-                    print("state: ", self.board.render())
-                    exit(1)
-                    #self.my_actions.remove(action)
-                    #return self._tree_policy()
                 return self.expand(action)
             else:
                 if not self.my_actions:
                     print("ERROR: No actions available")
                     return None
-                if (self.__action_to_children):
+                if self.__action_to_children:
                     print("finish expanding, looking for best child")
                     return self.best_child()
         return self
@@ -214,14 +211,14 @@ class MCTSNode:
                 return None
             # simulation
             # print("simulating")
-            #print("rolling out: ", i)
+            # print("rolling out: ", i)
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
             end_node = v.new_rollout(MAX_STEPS)
-            if (end_node):
+            if end_node:
                 end_node.backpropagate(end_node.winning_color, self.color)
-            
+
             # rollout to the end of the game
             # end_node = v.rollout()
             # if not end_node:
@@ -249,7 +246,6 @@ class MCTSNode:
         """
         return random.choice(list(self.my_actions))
 
-    
     def heuristics_judge(self) -> int:
         """
         heuristic function to predict if this player is winning
@@ -259,17 +255,15 @@ class MCTSNode:
             opp_move_count = len(self.parent.my_actions)
         else:
             opp_move_count = len(find_actions(self.board.state, self.color.opponent))
-        return (
-            - opp_move_count
-        )
-    
-    def chop_nodes_except(self, node: 'MCTSNode | None' = None):
+        return -opp_move_count
+
+    def chop_nodes_except(self, node: "MCTSNode | None" = None):
         """
         To free up memory, delele all useless nodes
         need to call gc.collect() after this function
         params: node: node to keep as it will be the new root
         """
-        if (node):
+        if node:
             # main branch
             for child in self.__action_to_children.values():
                 # child node to keep, all children of this node will be saved
@@ -291,8 +285,7 @@ class MCTSNode:
             del self.num_visits
             del self.untried_actions
             del self.danger
-       
-    
+
     def get_child(self, action: Action):
         """
         Function to wrap the action_to_children dictionary in case of KeyError
