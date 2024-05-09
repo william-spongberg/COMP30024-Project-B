@@ -55,7 +55,7 @@ class MCTSNode:
         
         self.results = defaultdict(int)
         self.results[1] = 0  # win
-        self.results[-1] = 0  # loss
+        # self.results[-1] = 0  # loss
         
         self.danger = False
 
@@ -135,8 +135,8 @@ class MCTSNode:
         self.num_visits += 1
         if result == root_color:
             self.results[1] += 1
-        elif result == root_color.opponent:
-            self.results[-1] += 1
+        # elif result == root_color.opponent:
+        #     self.results[-1] += 1
         if self.parent:
             self.parent.danger = self.danger
             self.parent.backpropagate(result, root_color)
@@ -276,6 +276,9 @@ class MCTSNode:
             del self.my_actions
             del self.results
             del self.color
+            del self.num_visits
+            del self.untried_actions
+            del self.danger
        
     
     def get_child(self, action: Action):
