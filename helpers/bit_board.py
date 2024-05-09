@@ -11,7 +11,9 @@ from referee.game.player import PlayerColor
 tetrominoes = make_tetrominoes(Coord(0, 0))
 
 
-def bit_check_adjacent_cells(board: "BitBoard", coords: list[Coord], color: PlayerColor) -> bool:
+def bit_check_adjacent_cells(
+    board: "BitBoard", coords: list[Coord], color: PlayerColor
+) -> bool:
     for coord in coords:
         for dir in Direction:
             adjacent = coord + dir
@@ -19,7 +21,10 @@ def bit_check_adjacent_cells(board: "BitBoard", coords: list[Coord], color: Play
                 return True
     return False
 
-def bit_valid_moves_of_any_empty(board: "BitBoard", coord: Coord, color: PlayerColor) -> list[Action]:
+
+def bit_valid_moves_of_any_empty(
+    board: "BitBoard", coord: Coord, color: PlayerColor
+) -> list[Action]:
     if board._cell_occupied(coord):
         print("invalid coord")
         exit(1)
@@ -30,7 +35,10 @@ def bit_valid_moves_of_any_empty(board: "BitBoard", coord: Coord, color: PlayerC
             break
     return moves
 
-def bit_generate_random_move(board: "BitBoard", color: PlayerColor, first_turns: bool = False) -> Action:
+
+def bit_generate_random_move(
+    board: "BitBoard", color: PlayerColor, first_turns: bool = False
+) -> Action:
     if first_turns and color == PlayerColor.RED:
         return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
     coords = bit_valid_coords(board, color, first_turns)
@@ -44,12 +52,14 @@ def bit_generate_random_move(board: "BitBoard", color: PlayerColor, first_turns:
     print("no valid moves available")
     exit(1)
 
+
 def bit_has_valid_move(board: "BitBoard", coord: Coord) -> bool:
     for tetromino in tetrominoes:
         action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         if bit_is_valid(board, action):
             return True
     return False
+
 
 def bit_valid_moves(board: "BitBoard", coord: Coord) -> list[Action]:
     valid_moves = []
@@ -59,7 +69,10 @@ def bit_valid_moves(board: "BitBoard", coord: Coord) -> list[Action]:
             valid_moves.append(action)
     return valid_moves
 
-def bit_valid_coords(board: "BitBoard", player_color: PlayerColor, first_turns: bool = False) -> list[Coord]:
+
+def bit_valid_coords(
+    board: "BitBoard", player_color: PlayerColor, first_turns: bool = False
+) -> list[Coord]:
     if first_turns and board._red_state == 0 and board._blue_state == 0:
         return [Coord(r, c) for r in range(BOARD_N) for c in range(BOARD_N)]
     state = board.red_state if player_color == PlayerColor.RED else board.blue_state
@@ -71,11 +84,13 @@ def bit_valid_coords(board: "BitBoard", player_color: PlayerColor, first_turns: 
                 valid_coords.append(adjacent)
     return valid_coords
 
+
 def bit_is_valid(board: "BitBoard", piece: Action) -> bool:
     for coord in piece.coords:
         if not board._cell_empty(coord):
             return False
     return True
+
 
 def bit_find_actions(board: "BitBoard", color: PlayerColor) -> list[Action]:
     coords: list[Coord] = bit_valid_coords(board, color)
@@ -84,10 +99,18 @@ def bit_find_actions(board: "BitBoard", color: PlayerColor) -> list[Action]:
         actions.extend(bit_valid_moves(board, coord))
     return list(set(actions))
 
-def bit_update_actions(prev_board: "BitBoard", new_board: "BitBoard", my_actions: list[Action], color: PlayerColor):
+
+def bit_update_actions(
+    prev_board: "BitBoard",
+    new_board: "BitBoard",
+    my_actions: list[Action],
+    color: PlayerColor,
+):
     my_actions_set = set(my_actions)
     for action in my_actions_set.copy():
-        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(new_board, list(action.coords), color):
+        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(
+            new_board, list(action.coords), color
+        ):
             my_actions_set.remove(action)
     for coord in bit_changed_coords(prev_board, new_board):
         if new_board[coord] is None:
@@ -98,8 +121,17 @@ def bit_update_actions(prev_board: "BitBoard", new_board: "BitBoard", my_actions
                     my_actions_set.update(bit_valid_moves(new_board, adjacent))
     return list(my_actions_set)
 
+
 def bit_changed_coords(prev_board: "BitBoard", new_board: "BitBoard") -> list[Coord]:
-    return [Coord(i // BOARD_N, i % BOARD_N) for i in range(BOARD_N * BOARD_N) if (prev_board[Coord(i // BOARD_N, i % BOARD_N)] != new_board[Coord(i // BOARD_N, i % BOARD_N)])]
+    return [
+        Coord(i // BOARD_N, i % BOARD_N)
+        for i in range(BOARD_N * BOARD_N)
+        if (
+            prev_board[Coord(i // BOARD_N, i % BOARD_N)]
+            != new_board[Coord(i // BOARD_N, i % BOARD_N)]
+        )
+    ]
+
 
 def bit_has_action(board: "BitBoard", color: PlayerColor) -> bool:
     coords: list[Coord] = bit_valid_coords(board, color)
