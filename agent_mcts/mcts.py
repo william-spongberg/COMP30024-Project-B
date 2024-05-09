@@ -24,7 +24,6 @@ class MCTSNode:
     """
     Node class for the Monte Carlo Tree Search algorithm
     """
-    state_to_move: dict[dict[Coord, CellState], set[Action]] = {}
     def __init__(
         self,
         board: SimBoard,
@@ -56,9 +55,10 @@ class MCTSNode:
         
         self.results = defaultdict(int)
         self.results[1] = 0  # win
-        self.results[-1] = 0  # loss
+        # self.results[-1] = 0  # loss
         
         self.danger = False
+        self.winning_color:PlayerColor|None = None
 
     def expand(self, action: Action):
         """
@@ -102,7 +102,7 @@ class MCTSNode:
         
         return current_node
     
-    def new_rollout(self, max_steps) -> PlayerColor | None:
+    def new_rollout(self, max_steps) -> 'MCTSNode | None':
         """
         Simulate a random v random game from the current node
         not pushing all the way to the end of the game but stopping at max_steps
@@ -121,12 +121,14 @@ class MCTSNode:
                 warnings.warn("ERROR: No tree policy node found in rollout")
                 return None
         if current_node.is_terminal_node():
-            self.danger = True
-            return current_node.board.winner
-        if current_node.heuristics_judge() > current_node.heuristics_judge():
-            return current_node.color
-        self = current_node # make v the end node for backpropagation
-        return current_node.color.opponent
+            current_node.danger = True
+            current_node.winning_color = current_node.board.winner
+            return current_node
+        if current_node.heuristics_judge() > self.heuristics_judge():
+            current_node.winning_color = self.color
+        else:
+            current_node.winning_color = self.color.opponent
+        return current_node
             
 
     def backpropagate(self, result: PlayerColor | None, root_color: PlayerColor):
@@ -136,8 +138,8 @@ class MCTSNode:
         self.num_visits += 1
         if result == root_color:
             self.results[1] += 1
-        elif result == root_color.opponent:
-            self.results[-1] += 1
+        # elif result == root_color.opponent:
+        #     self.results[-1] += 1
         if self.parent:
             self.parent.danger = self.danger
             self.parent.backpropagate(result, root_color)
@@ -216,8 +218,9 @@ class MCTSNode:
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
-            winner = v.new_rollout(MAX_STEPS)
-            v.backpropagate(winner, self.color)
+            end_node = v.new_rollout(MAX_STEPS)
+            if (end_node):
+                end_node.backpropagate(end_node.winning_color, self.color)
             
             # rollout to the end of the game
             # end_node = v.rollout()
@@ -280,6 +283,9 @@ class MCTSNode:
             del self.my_actions
             del self.results
             del self.color
+            del self.num_visits
+            del self.untried_actions
+            del self.danger
        
     
     def get_child(self, action: Action):
