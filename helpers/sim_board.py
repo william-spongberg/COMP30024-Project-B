@@ -23,23 +23,21 @@ def update_actions(prev_state: dict[Coord, CellState],
     """
     Get a new list of actions that are valid for the current state
     """
-    action_to_remove_in_my_actions = []
-    for action in my_actions:
+    my_actions_set = set(my_actions)
+    for action in my_actions_set.copy():
         if not is_valid(new_state, action) or not check_adjacent_cells(action.coords, new_state, color):
-            action_to_remove_in_my_actions.append(action)
-    for action_remove in action_to_remove_in_my_actions:
-        my_actions.remove(action_remove)
+            my_actions_set.remove(action)
     for coord in changed_coords(prev_state, new_state):
         # two situations: new empty/new needed color
         if new_state[coord].player is None:
-            my_actions.extend(valid_moves_of_any_empty(new_state, coord, color))
+            my_actions_set.update(valid_moves_of_any_empty(new_state, coord, color))
         elif new_state[coord].player == color:
             # looking for empty adjacent cells
             for adjacent in [coord + dir for dir in Direction]:
                 if new_state[adjacent].player is None:
-                    my_actions.extend(valid_moves(new_state, adjacent))
-    my_actions = list(set(my_actions))
-    return
+                    my_actions_set.update(valid_moves(new_state, adjacent))
+    return list(my_actions_set)
+    #my_actions = list(my_actions_set)
         
 def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
     """

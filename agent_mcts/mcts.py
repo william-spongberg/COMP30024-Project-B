@@ -43,7 +43,7 @@ class MCTSNode:
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
-            update_actions(parent.parent.board.state, self.board.state, self.my_actions, board.turn_color)
+            self.my_actions = update_actions(parent.parent.board.state, self.board.state, self.my_actions, board.turn_color)
         else:
             print("no parent")
             self.my_actions = find_actions(board.state, board.turn_color)
@@ -89,12 +89,12 @@ class MCTSNode:
         """
         Simulate a random v random game from the current node
         """
-        push_step = 0
+        #push_step = 0
         current_node = self
         while not current_node.is_terminal_node():
             # light playout policy
             current_node = current_node._tree_policy()
-            push_step += 1
+            #push_step += 1
             # print("pushing step: ", push_step)
             if not current_node:
                 warnings.warn("ERROR: No tree policy node found in rollout")
@@ -185,8 +185,11 @@ class MCTSNode:
                 self.untried_actions.remove(action)
                 # met bug about expanding invalid action haven't fixed yet but this can be a temporary solution
                 if not is_valid(self.board.state, action) or not check_adjacent_cells(action.coords, self.board.state, self.color):
-                    self.my_actions.remove(action)
-                    return self._tree_policy()
+                    print("Invalid action: ", action)
+                    print("state: ", self.board.state)
+                    exit(1)
+                    #self.my_actions.remove(action)
+                    #return self._tree_policy()
                 return self.expand(action)
             else:
                 if not self.my_actions:
