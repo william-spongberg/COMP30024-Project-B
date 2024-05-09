@@ -259,10 +259,10 @@ class MCTSNode:
             result -= len(find_actions(self.board.state, self.color.opponent))
         if self.board.turn_count > CLOSE_TO_END:
             if self.color == PlayerColor.RED:
-                result += round((self.board.red_state - self.board.blue_state) + 
+                result += round((self.board._red_state - self.board._blue_state) + 
                                 len(self.my_actions)/ MAX_TURNS - self.board.turn_count)
             else:
-                result += round((self.board.blue_state - self.board.red_state + 
+                result += round((self.board._blue_state - self.board._red_state + 
                                  len(self.my_actions)) / MAX_TURNS - self.board.turn_count)
         return result
 
