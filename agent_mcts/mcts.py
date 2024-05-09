@@ -24,7 +24,6 @@ class MCTSNode:
     """
     Node class for the Monte Carlo Tree Search algorithm
     """
-    state_to_move: dict[dict[Coord, CellState], set[Action]] = {}
     def __init__(
         self,
         board: SimBoard,
@@ -120,12 +119,12 @@ class MCTSNode:
             if not current_node:
                 warnings.warn("ERROR: No tree policy node found in rollout")
                 return None
+        self = current_node # make v the end node for backpropagation
         if current_node.is_terminal_node():
             self.danger = True
             return current_node.board.winner
         if current_node.heuristics_judge() > current_node.heuristics_judge():
             return current_node.color
-        self = current_node # make v the end node for backpropagation
         return current_node.color.opponent
             
 
