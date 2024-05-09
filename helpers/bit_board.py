@@ -25,7 +25,7 @@ def bit_valid_moves_of_any_empty(board: "BitBoard", coord: Coord, color: PlayerC
         exit(1)
     moves = []
     for move in bit_valid_moves(board, coord):
-        if bit_check_adjacent_cells(board, move.coords, color):
+        if bit_check_adjacent_cells(board, list(move.coords), color):
             moves.append(move)
             break
     return moves
@@ -87,7 +87,7 @@ def bit_find_actions(board: "BitBoard", color: PlayerColor) -> list[Action]:
 def bit_update_actions(prev_board: "BitBoard", new_board: "BitBoard", my_actions: list[Action], color: PlayerColor):
     my_actions_set = set(my_actions)
     for action in my_actions_set.copy():
-        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(new_board, action.coords, color):
+        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(new_board, list(action.coords), color):
             my_actions_set.remove(action)
     for coord in bit_changed_coords(prev_board, new_board):
         if new_board[coord] is None:
