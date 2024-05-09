@@ -22,6 +22,7 @@ from timeit import default_timer as timer
 
 MAX_STEPS = 6
 
+CLOSE_TO_END = 100
 
 class MCTSNode:
     """
@@ -255,13 +256,18 @@ class MCTSNode:
     def heuristics_judge(self) -> int:
         """
         heuristic function to predict if this player is winning
-        """
-        # move_count = len(self.my_actions)
+        """ 
+        result = 0
         if self.parent:
-            opp_move_count = len(self.parent.my_actions)
+            result -= len(self.parent.my_actions)
         else:
-            opp_move_count = len(find_actions(self.board.state, self.color.opponent))
-        return -opp_move_count
+            result -= len(find_actions(self.board.state, self.color.opponent))
+        if self.board.turn_count > CLOSE_TO_END:
+            if self.color == PlayerColor.RED:
+                result += round((self.board.red_state - self.board.blue_state) / MAX_TURNS - self.board.turn_count)
+            else:
+                result += round((self.board.blue_state - self.board.red_state) / MAX_TURNS - self.board.turn_count)
+        return result
 
     def chop_nodes_except(self, node: "MCTSNode | None" = None):
         """
