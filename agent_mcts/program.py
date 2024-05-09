@@ -55,6 +55,7 @@ class Agent:
                 # self.root.untried_actions.remove(action)
                 # self.root.my_actions.remove(action)
                 # return self.action()
+            self.root.my_actions.remove(action)
             return action
         return self.random_move()
 
