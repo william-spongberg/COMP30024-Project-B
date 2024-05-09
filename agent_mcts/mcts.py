@@ -11,6 +11,7 @@ from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
 from referee.game.coord import Coord
 from referee.game.player import PlayerColor
+from timeit import default_timer as timer
 
 # generally want to make more efficient (want at least 100 sims per move)
 # TODO: implement asynchronous MCTS to allow searching to continue while waiting for opponent move
@@ -101,6 +102,7 @@ class MCTSNode:
         """
         Simulate a random v random game from the current node
         """
+        print("rolling out for turns")
         push_step = 0
         current_node = self
         while not current_node.is_terminal_node():
@@ -200,11 +202,14 @@ class MCTSNode:
                     return self.best_child()
         return self
 
-    def best_action(self, sim_no=100) -> Action | None:
+    def best_action(self, remaining_time_this_turn: float, sim_no=100) -> Action | None:
         """
         Perform MCTS search for the best action
         """
+        start_time = timer()
         for i in range(sim_no):
+            if timer() - start_time > remaining_time_this_turn:
+                break
             # expansion
             v: MCTSNode | None = self._tree_policy()
             if not v:

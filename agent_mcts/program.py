@@ -9,6 +9,7 @@ import random
 from agent_mcts.mcts import MCTSNode
 from helpers.movements import check_adjacent_cells, generate_random_move, is_valid
 from helpers.sim_board import SimBoard
+from timeit import default_timer as timer
 from referee.game import (
     PlayerColor,
     Action,
@@ -40,6 +41,15 @@ class Agent:
         else:
             if not self.root:
                 self.root = MCTSNode(copy.deepcopy(self.board))
+                
+        # time count
+        start_time = timer()
+        time_remaining:float = referee["time_remaining"] # type: ignore
+        estimate_turns = self.root.rollout_turns()
+        estimation_cost = timer() - start_time
+        estimated_time = (time_remaining - estimation_cost) / estimate_turns
+        print("Time left: ", time_remaining - estimation_cost)
+        print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
 
         if len(self.root.my_actions) > 200:
             return self.random_move()
@@ -47,12 +57,12 @@ class Agent:
         # action = self.root.best_action(5)
         if len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
-            action = self.root.best_action(
+            action = self.root.best_action(estimated_time,
                 max((int)(len(self.root.my_actions) / 2), WIDE_SIM_NO)
             )
         else:
             # take it serious on intensive situations
-            action = self.root.best_action(
+            action = self.root.best_action(estimated_time,
                 max((int)(len(self.root.my_actions)), NARROW_SIM_NO)
             )
 
