@@ -25,7 +25,7 @@ def update_actions(prev_state: dict[Coord, CellState],
     """
     my_actions_set = set(my_actions)
     for action in my_actions_set.copy():
-        if not is_valid(new_state, action) or not check_adjacent_cells(action.coords, new_state, color):
+        if not is_valid(new_state, action) or not check_adjacent_cells(action, new_state, color):
             my_actions_set.remove(action)
     for coord in changed_coords(prev_state, new_state):
         # two situations: new empty/new needed color

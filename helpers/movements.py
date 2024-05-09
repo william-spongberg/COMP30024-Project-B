@@ -20,12 +20,12 @@ def is_valid(state: dict[Coord, CellState], piece: Action) -> bool:
 
 
 def check_adjacent_cells(
-    coords: list[Coord], state: dict[Coord, CellState], color: PlayerColor
+    action: Action, state: dict[Coord, CellState], color: PlayerColor
 ) -> bool:
     """
     Check if the given coordinates have any adjacent cells of the same color
     """
-    for coord in coords:
+    for coord in action.coords:
         for dir in Direction:
             if state[coord + dir].player == color:
                 return True
@@ -119,7 +119,7 @@ def valid_moves_of_any_empty(
     return [
         move
         for move in valid_moves(state, coord)
-        if check_adjacent_cells(move.coords, state, color)
+        if check_adjacent_cells(move, state, color)
     ]
 
 

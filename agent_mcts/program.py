@@ -99,7 +99,7 @@ class Agent:
     def random_move(self) -> Action:
         action = random.choice(list(self.available_moves))
         if not is_valid(self.board.state, action) or not check_adjacent_cells(
-            action.coords, self.board.state, self.color
+            action, self.board.state, self.color
         ):
             print("Invalid action: ", action)
             print("state: ", self.board.render())
