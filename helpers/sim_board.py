@@ -218,7 +218,7 @@ class SimBoard:
         """
         return (
             self.turn_limit_reached
-            or not has_action(self._state, self._turn_color)
+            or not has_action(self._state, self._turn_color) and self.turn_count > 1
         )
 
     @property
