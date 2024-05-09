@@ -1,9 +1,112 @@
+import random
 from helpers.sim_board import has_action
+from helpers.tetrominoes import make_tetrominoes
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import BOARD_N, MAX_TURNS
-from referee.game.coord import Coord
+from referee.game.coord import Coord, Direction
 from referee.game.player import PlayerColor
+
+# bit methods
+tetrominoes = make_tetrominoes(Coord(0, 0))
+
+
+def bit_check_adjacent_cells(board: "BitBoard", coords: list[Coord], color: PlayerColor) -> bool:
+    for coord in coords:
+        for dir in Direction:
+            adjacent = coord + dir
+            if board[adjacent] == color:
+                return True
+    return False
+
+def bit_valid_moves_of_any_empty(board: "BitBoard", coord: Coord, color: PlayerColor) -> list[Action]:
+    if board._cell_occupied(coord):
+        print("invalid coord")
+        exit(1)
+    moves = []
+    for move in bit_valid_moves(board, coord):
+        if bit_check_adjacent_cells(board, move.coords, color):
+            moves.append(move)
+            break
+    return moves
+
+def bit_generate_random_move(board: "BitBoard", color: PlayerColor, first_turns: bool = False) -> Action:
+    if first_turns and color == PlayerColor.RED:
+        return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
+    coords = bit_valid_coords(board, color, first_turns)
+    while coords:
+        coord = random.choice(coords)
+        coords.remove(coord)
+        moves = bit_valid_moves(board, coord)
+        if moves:
+            print(f"generated {len(moves)} valid moves at {coord}")
+            return random.choice(moves)
+    print("no valid moves available")
+    exit(1)
+
+def bit_has_valid_move(board: "BitBoard", coord: Coord) -> bool:
+    for tetromino in tetrominoes:
+        action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        if bit_is_valid(board, action):
+            return True
+    return False
+
+def bit_valid_moves(board: "BitBoard", coord: Coord) -> list[Action]:
+    valid_moves = []
+    for tetromino in tetrominoes:
+        action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
+        if bit_is_valid(board, action):
+            valid_moves.append(action)
+    return valid_moves
+
+def bit_valid_coords(board: "BitBoard", player_color: PlayerColor, first_turns: bool = False) -> list[Coord]:
+    if first_turns and board._red_state == 0 and board._blue_state == 0:
+        return [Coord(r, c) for r in range(BOARD_N) for c in range(BOARD_N)]
+    state = board.red_state if player_color == PlayerColor.RED else board.blue_state
+    valid_coords = []
+    for coord in state.keys():
+        for dir in Direction:
+            adjacent = coord + dir
+            if board._cell_empty(adjacent):
+                valid_coords.append(adjacent)
+    return valid_coords
+
+def bit_is_valid(board: "BitBoard", piece: Action) -> bool:
+    for coord in piece.coords:
+        if not board._cell_empty(coord):
+            return False
+    return True
+
+def bit_find_actions(board: "BitBoard", color: PlayerColor) -> list[Action]:
+    coords: list[Coord] = bit_valid_coords(board, color)
+    actions: list[Action] = []
+    for coord in coords:
+        actions.extend(bit_valid_moves(board, coord))
+    return list(set(actions))
+
+def bit_update_actions(prev_board: "BitBoard", new_board: "BitBoard", my_actions: list[Action], color: PlayerColor):
+    my_actions_set = set(my_actions)
+    for action in my_actions_set.copy():
+        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(new_board, action.coords, color):
+            my_actions_set.remove(action)
+    for coord in bit_changed_coords(prev_board, new_board):
+        if new_board[coord] is None:
+            my_actions_set.update(bit_valid_moves_of_any_empty(new_board, coord, color))
+        elif new_board[coord] == color:
+            for adjacent in [coord + dir for dir in Direction]:
+                if new_board[adjacent] is None:
+                    my_actions_set.update(bit_valid_moves(new_board, adjacent))
+    return list(my_actions_set)
+
+def bit_changed_coords(prev_board: "BitBoard", new_board: "BitBoard") -> list[Coord]:
+    return [Coord(i // BOARD_N, i % BOARD_N) for i in range(BOARD_N * BOARD_N) if (prev_board[Coord(i // BOARD_N, i % BOARD_N)] != new_board[Coord(i // BOARD_N, i % BOARD_N)])]
+
+def bit_has_action(board: "BitBoard", color: PlayerColor) -> bool:
+    coords: list[Coord] = bit_valid_coords(board, color)
+    for coord in coords:
+        if bit_has_valid_move(board, coord):
+            return True
+    return False
 
 
 class BitBoard:
@@ -13,8 +116,8 @@ class BitBoard:
         init_state: dict[Coord, CellState] | None = None,
         init_color: PlayerColor = PlayerColor.RED,
     ):
-        self.red_state = 0
-        self.blue_state = 0
+        self._red_state = 0
+        self._blue_state = 0
         self._turn_color: PlayerColor = init_color
         self._turn_count: int = 0
 
@@ -27,9 +130,9 @@ class BitBoard:
             index = coord.r * BOARD_N + coord.c
             if self._turn_color == PlayerColor.RED:
                 # use bitwise OR to add piece
-                self.red_state |= 1 << index 
+                self._red_state |= 1 << index
             else:
-                self.blue_state |= 1 << index
+                self._blue_state |= 1 << index
 
         self.clear_lines(action)
 
@@ -50,14 +153,14 @@ class BitBoard:
         for coord in coords_to_remove:
             index = coord.r * BOARD_N + coord.c
             # remove piece from red and blue bit representations
-            self.red_state &= ~(1 << index)
-            self.blue_state &= ~(1 << index)
+            self._red_state &= ~(1 << index)
+            self._blue_state &= ~(1 << index)
 
     def _cell_occupied(self, coord: Coord) -> bool:
         index = coord.r * BOARD_N + coord.c
         # return true if red or blue has piece at cell
-        return bool((self.red_state >> index) & 1) or bool(
-            (self.blue_state >> index) & 1
+        return bool((self._red_state >> index) & 1) or bool(
+            (self._blue_state >> index) & 1
         )
 
     def _cell_empty(self, coord: Coord) -> bool:
@@ -79,7 +182,7 @@ class BitBoard:
         if color == "b":
             color_code = "\033[34m"
         return f"{bold_code}{color_code}{str}\033[0m"
-    
+
     def render(self, use_color: bool = False) -> str:
         output = ""
         for r in range(BOARD_N):
@@ -87,9 +190,9 @@ class BitBoard:
                 index = r * BOARD_N + c
                 color = None
                 if self._cell_occupied(Coord(r, c)):
-                    if (self.red_state >> index) & 1:
+                    if (self._red_state >> index) & 1:
                         color = "r"
-                    elif (self.blue_state >> index) & 1:
+                    elif (self._blue_state >> index) & 1:
                         color = "b"
                     text = f"{color} "
                     if use_color:
@@ -100,11 +203,11 @@ class BitBoard:
                     output += ". "
             output += "\n"
         return output
-    
+
     def copy(self):
         new_board = BitBoard()
-        new_board.red_state = self.red_state
-        new_board.blue_state = self.blue_state
+        new_board._red_state = self._red_state
+        new_board._blue_state = self._blue_state
         new_board._turn_color = self._turn_color
         new_board._turn_count = self._turn_count
         return new_board
@@ -112,10 +215,10 @@ class BitBoard:
     def __getitem__(self, coord: Coord) -> CellState:
         index = coord.r * BOARD_N + coord.c
         # if red has piece at cell, return red CellState
-        if (self.red_state >> index) & 1:
+        if (self._red_state >> index) & 1:
             return CellState(PlayerColor.RED)
         # if blue has piece at cell, return blue CellState
-        elif (self.blue_state >> index) & 1:
+        elif (self._blue_state >> index) & 1:
             return CellState(PlayerColor.BLUE)
         else:
             return CellState()
@@ -124,16 +227,16 @@ class BitBoard:
         index = coord.r * BOARD_N + coord.c
         # if the new state is red, add red piece and remove blue piece
         if cell == CellState(PlayerColor.RED):
-            self.red_state |= 1 << index
-            self.blue_state &= ~(1 << index)
+            self._red_state |= 1 << index
+            self._blue_state &= ~(1 << index)
         # if the new state is blue, add blue piece and remove red piece
         elif cell == CellState(PlayerColor.BLUE):
-            self.blue_state |= 1 << index
-            self.red_state &= ~(1 << index)
+            self._blue_state |= 1 << index
+            self._red_state &= ~(1 << index)
         else:
             # if new state is empty, remove both red and blue pieces
-            self.red_state &= ~(1 << index)
-            self.blue_state &= ~(1 << index)
+            self._red_state &= ~(1 << index)
+            self._blue_state &= ~(1 << index)
 
     def _row_occupied(self, coord: Coord) -> list[Coord]:
         if all(self._cell_occupied(Coord(coord.r, c)) for c in range(BOARD_N)):
@@ -150,10 +253,10 @@ class BitBoard:
     def _player_token_count(self, color: PlayerColor) -> int:
         if color == PlayerColor.RED:
             # if player is red, count the number of 1s in red_state
-            return bin(self.red_state).count("1")
+            return bin(self._red_state).count("1")
         else:
             # if player is blue, count the number of 1s in red_state
-            return bin(self.blue_state).count("1")
+            return bin(self._blue_state).count("1")
 
     def _occupied_coords(self) -> list[Coord]:
         return list(filter(self._cell_occupied, self.state.keys()))
@@ -179,12 +282,36 @@ class BitBoard:
             for c in range(BOARD_N):
                 index = r * BOARD_N + c  # calculate the index in bit representation
                 # if red has piece at cell, add red CellState
-                if (self.red_state >> index) & 1:
+                if (self._red_state >> index) & 1:
                     state[Coord(r, c)] = CellState(PlayerColor.RED)
                 # if blue has piece at cell, add blue CellState
-                elif (self.blue_state >> index) & 1:
+                elif (self._blue_state >> index) & 1:
                     state[Coord(r, c)] = CellState(PlayerColor.BLUE)
                 else:  # if cell empty, add empty CellState
+                    state[Coord(r, c)] = CellState()
+        return state
+
+    @property
+    def blue_state(self) -> dict[Coord, CellState]:
+        state = {}
+        for r in range(BOARD_N):
+            for c in range(BOARD_N):
+                index = r * BOARD_N + c
+                if (self._blue_state >> index) & 1:
+                    state[Coord(r, c)] = CellState(PlayerColor.BLUE)
+                else:
+                    state[Coord(r, c)] = CellState()
+        return state
+
+    @property
+    def red_state(self) -> dict[Coord, CellState]:
+        state = {}
+        for r in range(BOARD_N):
+            for c in range(BOARD_N):
+                index = r * BOARD_N + c
+                if (self._red_state >> index) & 1:
+                    state[Coord(r, c)] = CellState(PlayerColor.RED)
+                else:
                     state[Coord(r, c)] = CellState()
         return state
 

@@ -4,7 +4,7 @@
 import copy
 import random
 
-from helpers.bit_board import BitBoard
+from helpers.bit_board import BitBoard, bit_generate_random_move
 from helpers.sim_board import SimBoard
 from helpers.movements import generate_random_move
 from referee.game import PlayerColor, Action, Action
@@ -23,8 +23,8 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         if self.board.turn_count < 2:
-            return generate_random_move(self.board.state, self.color, first_turns=True)
-        return generate_random_move(self.board.state, self.color)
+            return bit_generate_random_move(self.board, self.color, first_turns=True)
+        return bit_generate_random_move(self.board, self.color)
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
