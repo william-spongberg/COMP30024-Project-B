@@ -19,6 +19,7 @@ from referee.game import (
 
 NARROW_SIM_NO = 80
 WIDE_SIM_NO = 40
+BACKUP_TIME = 10
 # MAX_STEPS = 10 # not used, should modify MCTS class to use this
 
 
@@ -51,7 +52,7 @@ class Agent:
             time_remaining:float = referee["time_remaining"] # type: ignore
             estimate_turns = self.root.rollout_turns()
             estimation_cost = timer() - start_time
-            estimated_time = (time_remaining - estimation_cost) / estimate_turns
+            estimated_time = (time_remaining - estimation_cost - BACKUP_TIME) / estimate_turns
             print("Time left: ", time_remaining - estimation_cost)
             print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
         else:
