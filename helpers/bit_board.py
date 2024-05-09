@@ -80,6 +80,14 @@ class BitBoard:
                     output += ". "
             output += "\n"
         return output
+    
+    def copy(self):
+        new_board = BitBoard()
+        new_board.red_state = self.red_state
+        new_board.blue_state = self.blue_state
+        new_board._turn_color = self._turn_color
+        new_board._turn_count = self._turn_count
+        return new_board
 
     def __getitem__(self, coord: Coord) -> CellState:
         index = coord.r * BOARD_N + coord.c
