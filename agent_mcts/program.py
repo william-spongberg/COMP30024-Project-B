@@ -42,6 +42,9 @@ class Agent:
             if not self.root:
                 self.root = MCTSNode(copy.deepcopy(self.board))
                 
+        if len(self.root.my_actions) > 200:
+            return self.random_move()
+        
         # time count
         start_time = timer()
         time_remaining:float = referee["time_remaining"] # type: ignore
@@ -51,10 +54,6 @@ class Agent:
         print("Time left: ", time_remaining - estimation_cost)
         print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
 
-        if len(self.root.my_actions) > 200:
-            return self.random_move()
-
-        # action = self.root.best_action(5)
         if len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
             action = self.root.best_action(estimated_time,
