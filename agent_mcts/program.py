@@ -3,6 +3,7 @@
 
 import gc
 import random
+from re import M
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
@@ -17,9 +18,15 @@ from referee.game import (
     Coord,
 )
 
-NARROW_SIM_NO = 120
+# NARROW_SIM_NO = 200
+# WIDE_SIM_NO = 200
 WIDE_SIM_NO = 100
-BACKUP_TIME = 10
+MEDIUM_SIM_NO = 120
+NARROW_SIM_NO = 150
+BACKUP_TIME = 5
+WIDE_DEPTH = 2
+MEDIUM_DEPTH = 4
+NARROW_DEPTH = 6
 # MAX_STEPS = 10 # not used, should modify MCTS class to use this
 
 
@@ -42,9 +49,6 @@ class Agent:
         else:
             if not self.root:
                 self.root = MCTSNode(self.board.copy())
-                
-        if len(self.root.my_actions) > 200:
-            return self.random_move()
         
         # time count
         if referee:
@@ -57,15 +61,18 @@ class Agent:
             print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
         else:
             estimated_time = 10000
+            
+        if len(self.root.my_actions) > 200:
+            action = self.root.best_action(estimated_time, WIDE_DEPTH, WIDE_SIM_NO)
 
-        if len(self.root.my_actions) > 100 and not self.root.danger:
+        elif len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
-            action = self.root.best_action(estimated_time,
-                max((int)(len(self.root.my_actions)*1.5), WIDE_SIM_NO)
+            action = self.root.best_action(estimated_time, MEDIUM_DEPTH,
+                max((int)(len(self.root.my_actions)*1.5), MEDIUM_SIM_NO)
             )
         else:
             # take it serious on intensive situations
-            action = self.root.best_action(estimated_time,
+            action = self.root.best_action(estimated_time, NARROW_DEPTH,
                 max((int)(len(self.root.my_actions)*2), NARROW_SIM_NO)
             )
 
