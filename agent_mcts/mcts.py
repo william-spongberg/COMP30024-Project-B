@@ -76,22 +76,24 @@ class MCTSNode:
         self.danger = False
         self.winning_color: PlayerColor | None = None
 
-    def expand(self, action: Action):
+    def expand(self, action: Action | None = None):
         """
         Expand the current node by adding a new child node
         Using opponent move as action
         """
         board_node: BitBoard = self.board.copy()
+        if action is None:
+            action = random.choice(self.untried_actions)
 
-        # print(action)
         board_node.apply_action(action)
-        # print(board_node)
+
         child_node: MCTSNode = MCTSNode(
             board_node,
             parent=self,
             parent_action=action,
         )
-
+        if action in self.untried_actions:
+            self.untried_actions.remove(action)
         self.__action_to_children[action] = child_node
         return child_node
 
@@ -195,9 +197,7 @@ class MCTSNode:
         # select nodes to expand
         if not self.is_terminal_node():
             if not self.is_fully_expanded():
-                action = random.choice(self.untried_actions)
-                self.untried_actions.remove(action)
-                return self.expand(action)
+                return self.expand()
             else:
                 if not self.my_actions:
                     print("ERROR: No actions available")
