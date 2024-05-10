@@ -3,7 +3,7 @@ from math import log
 from collections import defaultdict
 import warnings
 
-from helpers.bit_board import BitBoard, bit_find_actions, bit_update_actions
+from helpers.bit_board import BitBoard, bit_find_actions, bit_update_actions, bit_a_update_actions
 from helpers.movements import check_adjacent_cells, is_valid
 from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
@@ -42,14 +42,14 @@ class MCTSNode:
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
-            self.my_actions = bit_update_actions(
+            self.my_actions = bit_a_update_actions(
                 parent.parent.board,
                 self.board,
                 self.my_actions,
                 board.turn_color,
             )
-            if (len(self.my_actions) == 0):
-                print("ERROR: bit_update_actions returned no actions")
+            # if (len(self.my_actions) == 0):
+            #     print("ERROR: bit_update_actions returned no actions")
             #print(f"bit_update_actions found {len(self.my_actions)} actions")
         else:
             # print("no parent")

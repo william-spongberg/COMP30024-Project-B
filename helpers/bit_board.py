@@ -136,6 +136,36 @@ def bit_update_actions(
                     if not new_moves:
                         print(f"No valid moves for adjacent cell at {adjacent}")
                     my_actions_set.update(new_moves)
+                    
+    # debug log
+    if (len(my_actions) == len(invalid_actions)):
+        print(prev_board.render(use_color=True))
+        print(new_board.render(use_color=True))
+    return list(my_actions_set)
+
+# function sturcture from old update_actions, works fine with bitboard
+def bit_a_update_actions(
+    prev_board: "BitBoard",
+    new_board: "BitBoard",
+    my_actions: list[Action],
+    color: PlayerColor,
+):
+    """
+    Get a new list of actions that are valid for the current state
+    """
+    my_actions_set = set(my_actions)
+    for action in my_actions_set.copy():
+        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(new_board, list(action.coords), color):
+            my_actions_set.remove(action)
+    for coord in bit_changed_coords(prev_board, new_board):
+        # two situations: new empty/new needed color
+        if new_board[coord].player is None:
+            my_actions_set.update(bit_valid_moves_of_any_empty(new_board, coord, color))
+        elif new_board[coord].player == color:
+            # looking for empty adjacent cells
+            for adjacent in [coord + dir for dir in Direction]:
+                if new_board[adjacent].player is None:
+                    my_actions_set.update(bit_valid_moves(new_board, adjacent))
     return list(my_actions_set)
 
 
