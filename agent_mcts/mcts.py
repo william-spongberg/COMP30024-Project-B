@@ -3,7 +3,7 @@ from math import log
 from collections import defaultdict
 import warnings
 
-from helpers.bit_board import BitBoard
+from helpers.bit_board import BitBoard, bit_find_actions, bit_update_actions
 from helpers.movements import check_adjacent_cells, is_valid
 from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
@@ -42,17 +42,26 @@ class MCTSNode:
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
-            self.my_actions = update_actions(
-                parent.parent.board.state,
-                self.board.state,
+            self.my_actions = bit_update_actions(
+                parent.parent.board,
+                self.board,
                 self.my_actions,
                 board.turn_color,
             )
+            if (len(self.my_actions) == 0):
+                print("ERROR: bit_update_actions returned no actions")
+            #print(f"bit_update_actions found {len(self.my_actions)} actions")
         else:
             # print("no parent")
-            self.my_actions = find_actions(board.state, board.turn_color)
+            self.my_actions = bit_find_actions(board, board.turn_color)
+            if (len(self.my_actions) == 0):
+                print("ERROR: bit_find_actions returned no actions")
+            #print(f"bit_find_actions found {len(self.my_actions)} actions")
 
         self.untried_actions = self.my_actions.copy()  # actions not yet tried
+        
+        #print(f"{len(self.untried_actions)} moves found for mcts")
+        
         self.__action_to_children: dict[Action, "MCTSNode"] = (
             {}
         )  # my actions to child node
@@ -103,7 +112,7 @@ class MCTSNode:
         current_node = self
         while not current_node.is_terminal_node():
             # light playout policy
-            current_node = current_node._tree_policy()
+            current_node = current_node.tree_policy()
             push_step += 1
             # print("pushing step: ", push_step)
             if not current_node:
@@ -124,7 +133,7 @@ class MCTSNode:
         current_node = self
         while not current_node.is_terminal_node() and push_step < max_steps:
             # light playout policy
-            current_node = current_node._tree_policy()
+            current_node = current_node.tree_policy()
             push_step += 1
             # print("pushing step: ", push_step)
             if not current_node:
@@ -179,7 +188,7 @@ class MCTSNode:
             exit()
         return best_child
 
-    def _tree_policy(self):
+    def tree_policy(self):
         """
         Select a node to expand based on the tree policy
         """
@@ -207,7 +216,7 @@ class MCTSNode:
             if timer() - start_time > remaining_time_this_turn:
                 break
             # expansion
-            v: MCTSNode | None = self._tree_policy()
+            v: MCTSNode | None = self.tree_policy()
             if not v:
                 print("ERROR: No tree policy node found")
                 return None
