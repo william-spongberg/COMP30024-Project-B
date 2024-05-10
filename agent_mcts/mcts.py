@@ -274,7 +274,36 @@ class MCTSNode:
                 result += round((self.board._blue_state - self.board._red_state + 
                                  len(self.my_actions)) / MAX_TURNS - self.board.turn_count)
         return result
-
+    
+    def heuristic_minimax(self, remaining_time_this_turn: float) -> Action | None:
+        """
+        Pick the action with the highest heuristic value with minimax strategy
+        """
+        start_time = timer()
+        best_action : Action| None = None
+        best_value = float("-inf")
+        while self.untried_actions:
+            if timer() - start_time > remaining_time_this_turn:
+                break
+            self.new_rollout(2)
+        for child in self.__action_to_children.values():
+            if child.num_visits == 0:
+                continue
+            
+            minimal = float("inf")
+            for grandchild in child.__action_to_children.values():
+                if grandchild.num_visits == 0:
+                    continue
+                value = grandchild.heuristics_judge()
+                if value < minimal:
+                    minimal = value
+                    
+            if minimal > best_value:
+                best_value = minimal
+                best_action = child.parent_action
+                
+        return best_action
+    
     def chop_nodes_except(self, node: "MCTSNode | None" = None):
         """
         To free up memory, delele all useless nodes

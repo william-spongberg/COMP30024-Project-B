@@ -18,13 +18,13 @@ from referee.game import (
     Coord,
 )
 
-WIDE_SIM_NO = 100
-MEDIUM_SIM_NO = 120
-NARROW_SIM_NO = 150
+# WIDE_SIM_NO = 100
+MEDIUM_SIM_NO = 150
+NARROW_SIM_NO = 200
 BACKUP_TIME = 5
-WIDE_DEPTH = 2
-MEDIUM_DEPTH = 4
-NARROW_DEPTH = 6
+# WIDE_DEPTH = 2
+MEDIUM_DEPTH = 6
+NARROW_DEPTH = 8
 
 class Agent:
 
@@ -59,7 +59,8 @@ class Agent:
             estimated_time = 10000
             
         if len(self.root.my_actions) > 200:
-            action = self.root.best_action(estimated_time, WIDE_DEPTH, WIDE_SIM_NO)
+            # action = self.root.heuristic_minimax(estimated_time)
+            action = self.root.heuristic_minimax(estimated_time)
 
         elif len(self.root.my_actions) > 100 and not self.root.danger:
             # not to waste time on too many branches
