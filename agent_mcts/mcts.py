@@ -83,7 +83,10 @@ class MCTSNode:
         """
         board_node: BitBoard = self.board.copy()
         if action is None:
-            action = random.choice(self.untried_actions)
+            if self.untried_actions:
+                action = random.choice(self.untried_actions)
+            else:
+                return random.choice(list(self.__action_to_children.values()))
 
         board_node.apply_action(action)
 
@@ -199,7 +202,7 @@ class MCTSNode:
             exit()
         return best_child
 
-    def tree_policy(self):
+    def tree_policy(self) -> "MCTSNode | None":
         """
         Select a node to expand based on the tree policy
         """
@@ -220,6 +223,7 @@ class MCTSNode:
         """
         Perform MCTS search for the best action
         """
+        sim_count = 0
         start_time = timer()
         for _ in range(sim_no):
             if timer() - start_time > remaining_time_this_turn:
@@ -238,14 +242,14 @@ class MCTSNode:
             end_node = v.new_rollout(steps)
             if end_node:
                 end_node.backpropagate(end_node.winning_color, self.color)
-
+            sim_count += 1
             # rollout to the end of the game
             # end_node = v.rollout()
             # if not end_node:
             #     print("ERROR: No winner found")
             #     return None
             # end_node.backpropagate(end_node.board.winner)
-
+        print("sim_count: ", sim_count)
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:

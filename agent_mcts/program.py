@@ -3,7 +3,6 @@
 
 import gc
 import random
-from re import M
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
@@ -87,7 +86,7 @@ class Agent:
             return
         new_root = self.root.get_child(action)
         self.root.chop_nodes_except(new_root)
-        gc.collect()
+        # gc.collect()
         self.root = new_root
         # print(self.root.board.render(True))
 
