@@ -105,23 +105,32 @@ class MCTSNode:
             return True
         return False
 
-    def rollout_turns(self) -> int:
+    def rollout_turns(self, times: int) -> int:
         """
         Simulate a random v random game from the current node
         """
         print("rolling out for turns")
-        push_step = 0
+        push_steps = []
         current_node = self
-        while not current_node.is_terminal_node():
-            # light playout policy
-            current_node = current_node.tree_policy()
-            push_step += 1
-            # print("pushing step: ", push_step)
-            if not current_node:
-                warnings.warn("ERROR: No tree policy node found in rollout")
-                return MAX_TURNS
-        current_node.backpropagate(current_node.board.winner, self.color)
-        return push_step
+        tried_times = 0
+        while (not tried_times == times):
+            this_push_step = 0
+            while not current_node.is_terminal_node():
+                # light playout policy
+                current_node = current_node.tree_policy()
+                this_push_step += 1
+                # print("pushing step: ", push_step)
+                if not current_node:
+                    warnings.warn("ERROR: No tree policy node found in rollout")
+                    return self.board.turn_count
+                current_node.backpropagate(current_node.board.winner, self.color)
+            tried_times += 1
+            push_steps.append(this_push_step)
+        sum = 0
+        for i in push_steps:
+            sum += i
+        avg = sum / len(push_steps)
+        return round(avg)
     
     def new_rollout(self, max_steps) -> 'MCTSNode | None':
         """
@@ -212,7 +221,7 @@ class MCTSNode:
         Perform MCTS search for the best action
         """
         start_time = timer()
-        for i in range(sim_no):
+        for _ in range(sim_no):
             if timer() - start_time > remaining_time_this_turn:
                 break
             # expansion

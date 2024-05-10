@@ -17,6 +17,7 @@ from referee.game import (
     Action,
     Coord,
 )
+from referee.game.constants import MAX_TURNS
 
 # WIDE_SIM_NO = 100
 MEDIUM_SIM_NO = 150
@@ -50,7 +51,9 @@ class Agent:
         if referee:
             start_time = timer()
             time_remaining:float = referee["time_remaining"] # type: ignore
-            estimate_turns = self.root.rollout_turns()
+            estimate_turns = self.root.rollout_turns(2)
+            if estimate_turns == 0:
+                estimate_turns = MAX_TURNS - self.board.turn_count
             estimation_cost = timer() - start_time
             estimated_time = (time_remaining - estimation_cost - BACKUP_TIME) / estimate_turns
             print("Time left: ", time_remaining - estimation_cost)
