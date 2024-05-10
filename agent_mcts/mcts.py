@@ -75,6 +75,7 @@ class MCTSNode:
 
         self.danger = False
         self.winning_color: PlayerColor | None = None
+        self.estimated_time: float = 0
 
     def expand(self, action: Action | None = None):
         """
@@ -95,6 +96,7 @@ class MCTSNode:
             parent=self,
             parent_action=action,
         )
+        child_node.estimated_time = self.estimated_time
         if action in self.untried_actions:
             self.untried_actions.remove(action)
         self.__action_to_children[action] = child_node
@@ -219,14 +221,14 @@ class MCTSNode:
                     return self.best_child()
         return self
 
-    def best_action(self, remaining_time_this_turn: float, steps, sim_no=100) -> Action | None:
+    def best_action(self, steps=MAX_TURNS, sim_no=100) -> Action | None:
         """
         Perform MCTS search for the best action
         """
         sim_count = 0
         start_time = timer()
         for _ in range(sim_no):
-            if timer() - start_time > remaining_time_this_turn:
+            if timer() - start_time > self.estimated_time:
                 break
             # expansion
             v: MCTSNode | None = self.tree_policy()
@@ -288,32 +290,21 @@ class MCTSNode:
                                  len(self.my_actions)) / MAX_TURNS - self.board.turn_count)
         return result
     
-    def heuristic_minimax(self, remaining_time_this_turn: float) -> Action | None:
+    def heuristic_greedy(self) -> Action | None:
         """
-        Pick the action with the highest heuristic value with minimax strategy
+        Pick the action with the highest heuristic value
         """
         start_time = timer()
         best_action : Action| None = None
         best_value = float("-inf")
-        while self.untried_actions:
-            if timer() - start_time > remaining_time_this_turn:
+        for action in self.my_actions:
+            if timer() - start_time > self.estimated_time:
                 break
-            self.new_rollout(2)
-        for child in self.__action_to_children.values():
-            if child.num_visits == 0:
-                continue
-            
-            minimal = float("inf")
-            for grandchild in child.__action_to_children.values():
-                if grandchild.num_visits == 0:
-                    continue
-                value = grandchild.heuristics_judge()
-                if value < minimal:
-                    minimal = value
-                    
-            if minimal > best_value:
-                best_value = minimal
-                best_action = child.parent_action
+            new_node = self.get_child(action)
+            value = new_node.heuristics_judge()
+            if value > best_value:
+                best_value = value
+                best_action = action
                 
         return best_action
     

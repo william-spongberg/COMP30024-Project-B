@@ -24,7 +24,7 @@ NARROW_SIM_NO = 200
 BACKUP_TIME = 5
 # WIDE_DEPTH = 2
 MEDIUM_DEPTH = 6
-NARROW_DEPTH = 8
+NARROW_DEPTH = 10
 
 class Agent:
 
@@ -45,34 +45,34 @@ class Agent:
         else:
             if not self.root:
                 self.root = MCTSNode(self.board.copy())
+                
+        if (self.root.parent and self.root.estimated_time < 0):
+            return self.random_move()
         
         # time count
         if referee:
             start_time = timer()
             time_remaining:float = referee["time_remaining"] # type: ignore
-            estimate_turns = self.root.rollout_turns(2)
+            estimate_turns = self.root.rollout_turns(4)
             if estimate_turns == 0:
                 estimate_turns = MAX_TURNS - self.board.turn_count
             estimation_cost = timer() - start_time
             estimated_time = (time_remaining - estimation_cost - BACKUP_TIME) / estimate_turns
-            print("Time left: ", time_remaining - estimation_cost)
+            time_left = time_remaining - estimation_cost
+            print("Time left: ", time_left)
             print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
         else:
             estimated_time = 10000
-            
-        if len(self.root.my_actions) > 200:
-            # action = self.root.heuristic_minimax(estimated_time)
-            action = self.root.heuristic_minimax(estimated_time)
+        
+        self.root.estimated_time = estimated_time
 
-        elif len(self.root.my_actions) > 100 and not self.root.danger:
+        if estimate_turns > NARROW_DEPTH and not self.root.danger:
             # not to waste time on too many branches
-            action = self.root.best_action(estimated_time, MEDIUM_DEPTH,
-                max((int)(len(self.root.my_actions)*1.5), MEDIUM_SIM_NO)
-            )
+            action = self.root.heuristic_greedy()
         else:
             # take it serious on intensive situations
-            action = self.root.best_action(estimated_time, NARROW_DEPTH,
-                max((int)(len(self.root.my_actions)*2), NARROW_SIM_NO)
+            action = self.root.best_action(
+                max((int)(len(self.root.my_actions)*2), NARROW_SIM_NO),
             )
 
         if action:
