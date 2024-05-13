@@ -191,7 +191,7 @@ class MCTSNode:
             else:
                 exploit: float = child.results[1] / child.num_visits
                 explore: float = (
-                    c_param * 2 * (log(self.num_visits) / child.num_visits) ** 0.5
+                    c_param * (log(self.num_visits) / child.num_visits) ** 0.5
                 )
 
             score: float = exploit + explore
