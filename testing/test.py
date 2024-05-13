@@ -19,7 +19,7 @@ def get_agents():
 
     if sys.argv[1] == "agent_random":
         agent_a = AgentRandom(PlayerColor.RED)
-    elif sys.argv[1] == "agent_mcts":
+    elif sys.argv[1] == "agent":
         agent_a = AgentMCTS(PlayerColor.RED)
     else:
         print("agent not found")
@@ -27,7 +27,7 @@ def get_agents():
 
     if sys.argv[2] == "agent_random":
         agent_b = AgentRandom(PlayerColor.BLUE)
-    elif sys.argv[2] == "agent_mcts":
+    elif sys.argv[2] == "agent":
         agent_b = AgentMCTS(PlayerColor.BLUE)
     else:
         print("agent not found")
@@ -43,9 +43,7 @@ def check_agent_state(agent, game_state):
         print(state.render(True))
         for coord in game_state._state:
             if game_state._state[coord] != agent.state[coord]:
-                print(
-                    "diff at", coord, game_state._state[coord], agent.state[coord]
-                )
+                print("diff at", coord, game_state._state[coord], agent.state[coord])
         sys.exit(1)
 
 
@@ -76,14 +74,14 @@ def play_game(depth=1000) -> float:
         # update agents
         agent_red.update(game_state.turn_color, move)
         agent_blue.update(game_state.turn_color, move)
-        
+
         # update step count
         steps += 1
 
         # *debug*
         # check_agent_state(agent_red, game_state)
         # check_agent_state(agent_blue, game_state)
-    
+
     if game_state.game_over:
         # print final game state
         print("final game state:")
@@ -92,16 +90,20 @@ def play_game(depth=1000) -> float:
     elif steps >= depth:
         print("final game state:")
         print(game_state.render(True))
-        if game_state._player_token_count(PlayerColor.RED) > game_state._player_token_count(PlayerColor.BLUE):
+        if game_state._player_token_count(
+            PlayerColor.RED
+        ) > game_state._player_token_count(PlayerColor.BLUE):
             winner = PlayerColor.RED
-        elif game_state._player_token_count(PlayerColor.RED) == game_state._player_token_count(PlayerColor.BLUE):
+        elif game_state._player_token_count(
+            PlayerColor.RED
+        ) == game_state._player_token_count(PlayerColor.BLUE):
             winner = None
         else:
             winner = PlayerColor.BLUE
         print("blue tokens: ", game_state._player_token_count(PlayerColor.BLUE))
         print("red tokens: ", game_state._player_token_count(PlayerColor.RED))
         print(winner, " wins")
-    
+
     return timer() - start_time
 
 
@@ -111,7 +113,7 @@ def play_game_multiple_times(num_games=1000, depth=1000):
         total_time += play_game(depth=depth)
     print("\n\ntotal time:", total_time)
     print("num games:", num_games)
-    if (depth != 1000):
+    if depth != 1000:
         print("to depth:", depth)
     else:
         print("to depth: unlimited")
@@ -119,12 +121,12 @@ def play_game_multiple_times(num_games=1000, depth=1000):
     print("games per second:", num_games / total_time)
 
 
-#play_game()
-play_game_multiple_times(num_games=1000, depth=8)
+# play_game()
+# play_game_multiple_times(num_games=1000, depth=8)
 
-# cProfile.run("play_game()", "test.prof")
-# cProfile.run("play_game_multiple_times(num_games=1000, depth=8)", "test.prof")
+cProfile.run("play_game()", "test.prof")
+cProfile.run("play_game_multiple_times(num_games=1000, depth=8)", "test.prof")
 
-# p = pstats.Stats("test.prof")
-# p.strip_dirs().sort_stats("cumulative").print_stats(10)
-# p.strip_dirs().sort_stats("time").print_stats(10)
+p = pstats.Stats("test.prof")
+p.strip_dirs().sort_stats("cumulative").print_stats(10)
+p.strip_dirs().sort_stats("time").print_stats(10)
