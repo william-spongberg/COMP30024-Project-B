@@ -1,5 +1,5 @@
 import random
-from math import log
+from math import ceil, log
 from collections import defaultdict
 from statistics import mean
 
@@ -97,14 +97,14 @@ class MCTSNode:
             return True
         return False
 
-    def rollout_turns(self, times: int) -> int:
+    def rollout_turns(self, rollouts: int) -> int:
         """
         Simulate a random v random game from the current node
         """
         print("rolling out for turns")
         push_steps = []
         tried_times = 0
-        while tried_times != times:
+        while tried_times != rollouts:
             current_node = self.tree_policy()
             if not current_node:
                 break
@@ -121,8 +121,10 @@ class MCTSNode:
                 current_node.results[-1] += 1
             tried_times += 1
             push_steps.append(this_push_step + 1)
+        print(push_steps)
         avg = mean(push_steps)
-        result = round(avg / 2)  # half of the turns are ours
+        result = ceil(avg / 2)  # half of the turns are ours
+        print(result)
         return result
 
     def new_rollout(self, max_steps) -> None:
@@ -245,7 +247,7 @@ class MCTSNode:
         """
         To free up memory, delele all useless nodes
         need to call gc.collect() after this function
-        params: node: node to keep as it will be the new root
+        params: node to keep as it will be the new root
         """
         if node:
             # main branch
@@ -274,6 +276,6 @@ class MCTSNode:
         if action in self.__action_to_children:
             return self.__action_to_children[action]
         else:
-            # did not expand it
+            # has not been expanded yet
             self.expand(action)
             return self.__action_to_children[action]
