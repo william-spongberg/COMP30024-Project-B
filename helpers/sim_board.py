@@ -223,7 +223,7 @@ class SimBoard:
         )
 
     @property
-    def winner(self) -> PlayerColor | None:
+    def winner_color(self) -> PlayerColor | None:
         if not self.game_over:
             return None
         if not has_action(self._state, self._turn_color):

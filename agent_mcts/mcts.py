@@ -126,7 +126,7 @@ class MCTSNode:
                 if not current_node:
                     warnings.warn("ERROR: No tree policy node found in rollout")
                     return self.board.turn_count
-                current_node.backpropagate(current_node.board.winner)
+                current_node.backpropagate(current_node.board.winner_color)
             tried_times += 1
             push_steps.append(this_push_step)
         _sum = 0
@@ -156,7 +156,7 @@ class MCTSNode:
                 return None
         if current_node.is_terminal_node():
             current_node.danger = True
-            current_node.winning_color = current_node.board.winner
+            current_node.winning_color = current_node.board.winner_color
             return current_node
         if current_node.greedy_judge(self.color) > self.greedy_judge(self.color):
             current_node.winning_color = self.color
@@ -235,7 +235,7 @@ class MCTSNode:
                 print("ERROR: No tree policy node found")
                 return None
             # simulation
-            if v.is_terminal_node() and v.board.winner == self.color:
+            if v.is_terminal_node() and v.board.winner_color == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
             end_node = v.new_rollout(steps)
@@ -243,6 +243,10 @@ class MCTSNode:
                 end_node.backpropagate(end_node.winning_color)
             sim_count += 1
         print("sim_count: ", sim_count)
+        
+        # time per simulation average
+        print("average time per simulation: ", (timer() - start_time) / sim_count)
+        
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:
