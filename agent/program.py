@@ -21,49 +21,53 @@ class Agent:
 
     # attributes
     board: SimBoard  # state of game
-    # NOTE: not to initialise until after first two turns
     root: MCTSNode | None  # root node of MCTS tree
     color: PlayerColor  # agent colour
     opponent: PlayerColor  # agent opponent
+    estimated_time: float  # estimated time for each move
+    estimated_turns: int  # estimated turns for each move
 
     def __init__(self, color: PlayerColor, **referee: dict):
         self.init(color)
 
+    def init(self, color: PlayerColor):
+        # agent info
+        self.color = color
+        self.name = "Agent_MCTS " + self.color.name
+        self.opponent = self.color.opponent
+
+        # game state
+        self.board = SimBoard()
+        self.root = None
+        self.estimated_time = 0
+        self.estimated_turns = 0
+
+        # announce agent
+        print(f"{self.name} *initiated*: {self.color}")
+
     def action(self, **referee: dict) -> Action:
-        # first two turns, run hard-coded moves
+        # first two turns, do random moves
         if self.board.turn_count < 2:
             return generate_random_move(self.board.state, self.color, first_turns=True)
-        # then we can start MCTS
-        else:
-            if not self.root:
-                self.root = MCTSNode(self.board.copy())
 
-        # branching factor too high, pick random
+        # then can start MCTS
+        if not self.root:
+            self.root = MCTSNode(self.board.copy())
+
+        # branching factor too high, pick random since not worth MCTS
         if self.root.estimated_time < 0 or (
             len(self.root.my_actions) > 200 and self.board.turn_count < 6
         ):
             return self.random_move()
 
-        # time count
+        # be aware of timer
         if referee:
-            start_time = timer()
-            time_remaining: float = referee["time_remaining"]  # type: ignore
-            estimate_turns = self.root.rollout_turns(1)
-            if estimate_turns == 0:
-                estimate_turns = MAX_TURNS - self.board.turn_count
-            estimation_cost = timer() - start_time
-            estimated_time = (
-                time_remaining - estimation_cost - BACKUP_TIME
-            ) / estimate_turns
-            time_left = time_remaining - estimation_cost
-            print("Time left: ", time_left)
-            print(f"Estimated time: {estimated_time} for {estimate_turns} moves")
+            self.set_timer(referee)
         else:
-            estimated_time = 10000
+            self.estimated_time = 10000
+        self.root.estimated_time = self.estimated_time
 
-        self.root.estimated_time = estimated_time
-
-        # casual search
+        # casual search if not too many moves
         if len(self.root.my_actions) > NARROW_MOVE_NO:
             print("Wide search")
             action = self.root.best_action(
@@ -90,27 +94,27 @@ class Agent:
         self.root.chop_nodes_except(new_root)
         self.root = new_root
 
-    def init(self, color: PlayerColor):
-        self.board = SimBoard()
-        self.color = color
-        self.root = None
-        self.name = "Agent_MCTS " + self.color.name
-        self.opponent = self.color.opponent
+    def set_timer(self, referee):
+        start_time = timer()
+        time_remaining: float = referee["time_remaining"]  # type: ignore
+        self.estimated_turns = self.root.rollout_turns(1)  # type: ignore
 
-        print(f"{self.name} *initiated*: {self.color}")
+        if self.estimated_turns == 0:
+            self.estimated_turns = MAX_TURNS - self.board.turn_count
+        estimation_cost = timer() - start_time
+        self.estimated_time = (
+            time_remaining - estimation_cost - BACKUP_TIME
+        ) / self.estimated_turns
+        time_left = time_remaining - estimation_cost
+
+        print("Time left: ", time_left)
+        print(f"Estimated time: {self.estimated_time} for {self.estimated_turns} moves")
 
     def random_move(self) -> Action:
         """
-        Generate a random move for the agent, useless if the node is not initialised
+        Generate a random move for the agent
         """
-        action = random.choice(list(self.available_moves))
-        if not is_valid(self.board.state, action) or not check_adjacent_cells(
-            action, self.board.state, self.color
-        ):
-            print("Invalid action: ", action)
-            print("state: ", self.board.render())
-            exit(1)
-        return action
+        return random.choice(list(self.available_moves))
 
     @property
     def available_moves(self) -> list[Action]:
