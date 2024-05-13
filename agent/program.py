@@ -3,7 +3,7 @@
 
 import random
 
-from agent.mcts import MCTSNode
+from .mcts import MCTSNode
 from .helpers.movements import generate_random_move
 from .helpers.sim_board import SimBoard
 from timeit import default_timer as timer
@@ -16,6 +16,7 @@ DEFAULT_SIM_NO = 200
 NARROW_MOVE_STANDARD = 100
 BACKUP_TIME = 5
 NUM_TURN_ESTIMATION_ROLLOUTS = 3
+UNLIM_TIME = 10000
 
 
 class Agent:
@@ -70,7 +71,7 @@ class Agent:
             self.set_timer(referee)
         else:
             # if no referee, just set a large default time
-            self.estimated_time = 10000
+            self.estimated_time = UNLIM_TIME
         self.root.estimated_time = self.estimated_time
 
         # casual search if not too many moves
@@ -109,6 +110,8 @@ class Agent:
         """
         start_time = timer()
         time_remaining: float = referee["time_remaining"]  # type: ignore
+        if time_remaining == None:
+            time_remaining = UNLIM_TIME
         self.estimated_turns = self.root.estimate_turns(NUM_TURN_ESTIMATION_ROLLOUTS)  # type: ignore
 
         if self.estimated_turns == 0:
