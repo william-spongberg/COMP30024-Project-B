@@ -34,7 +34,6 @@ def bit_valid_moves_of_any_empty(
     for move in bit_valid_moves(board, coord):
         if bit_check_adjacent_cells(board, list(move.coords), color):
             moves.append(move)
-            break
     return moves
 
 
