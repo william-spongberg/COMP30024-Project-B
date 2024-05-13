@@ -1,13 +1,9 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
-import copy
-import random
-
-from helpers.sim_board import SimBoard
-from helpers.movements import valid_moves, valid_coords
-from referee.game import PlayerColor, Action, Action, Coord
-from referee.game.board import Board
+from agent.helpers.sim_board import SimBoard
+from agent.helpers.movements import generate_random_move
+from referee.game import PlayerColor, Action, Action
 
 
 class Agent:
@@ -22,7 +18,9 @@ class Agent:
         self.init(color)
 
     def action(self, **referee: dict) -> Action:
-        return self.get_random_move()
+        if self.board.turn_count < 2:
+            return generate_random_move(self.board._state, self.color, first_turns=True)
+        return generate_random_move(self.board._state, self.color)
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
@@ -34,33 +32,6 @@ class Agent:
         self.opponent = self.color.opponent
 
         print(f"{self.name} *initiated*: {self.color}")
-
-    def get_random_move(self) -> Action:
-        coords = valid_coords(self.board.state, self.color)
-        coord: Coord = random.choice(coords)
-        coords.remove(coord)
-
-        # try all available coords
-        while not valid_moves(self.board.state, coord):
-            if coords:
-                coord = random.choice(coords)
-                coords.remove(coord)
-            else:
-                break
-        # if no valid moves available
-        if not valid_moves(self.board.state, coord):
-            return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
-
-        # prints to track valid moves generated
-        print(
-            f"generated {len(valid_moves(self.board.state, coord))} valid moves at {coord}"
-        )
-        # for move in valid_moves(self.board.state, coord):
-        #     print(move)
-
-        # return random move
-        return random.choice(valid_moves(self.board.state, coord))
-
 
 class AgentRandom:
     # wrap Agent class

@@ -1,5 +1,12 @@
-from .heuristics import BOARD_N
-from .movements import has_valid_move, valid_coords, valid_moves, valid_moves_of_any_empty, is_valid, check_adjacent_cells
+from .movements import (
+    has_valid_move,
+    valid_coords,
+    valid_moves,
+    is_valid,
+    check_adjacent_cells,
+    valid_moves_of_any_empty,
+)
+from referee.game.constants import BOARD_N
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
@@ -15,36 +22,49 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
     actions: list[Action] = []
     for coord in coords:
         actions.extend(valid_moves(state, coord))
+    actions = list(set(actions))
     return actions
 
-def update_actions(prev_state: dict[Coord, CellState], 
-                   new_state: dict[Coord, CellState], my_actions: list[Action], color: PlayerColor):
+
+def update_actions(
+    prev_state: dict[Coord, CellState],
+    new_state: dict[Coord, CellState],
+    my_actions: list[Action],
+    color: PlayerColor,
+):
     """
     Get a new list of actions that are valid for the current state
     """
-    action_to_remove_in_my_actions = []
-    for action in my_actions:
-        if not is_valid(new_state, action) or not check_adjacent_cells(action.coords, new_state, color):
-            action_to_remove_in_my_actions.append(action)
-    for action_remove in action_to_remove_in_my_actions:
-        my_actions.remove(action_remove)
+    my_actions_set = my_actions.copy()
+    for action in my_actions_set.copy():
+        if not is_valid(new_state, action) or not check_adjacent_cells(
+            action, new_state, color
+        ):
+            my_actions_set.remove(action)
     for coord in changed_coords(prev_state, new_state):
         # two situations: new empty/new needed color
         if new_state[coord].player is None:
-            my_actions.extend(valid_moves_of_any_empty(new_state, coord, color))
+            my_actions_set.extend(valid_moves_of_any_empty(new_state, coord, color))
         elif new_state[coord].player == color:
             # looking for empty adjacent cells
             for adjacent in [coord + dir for dir in Direction]:
                 if new_state[adjacent].player is None:
-                    my_actions.extend(valid_moves(new_state, adjacent))
-    my_actions = list(set(my_actions))
-    return
-        
-def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
+                    my_actions_set.extend(valid_moves(new_state, adjacent))
+    return list(set(my_actions_set))
+
+
+def changed_coords(
+    state: dict[Coord, CellState], new_state: dict[Coord, CellState]
+) -> list[Coord]:
     """
     Get all coordinates that have changed
     """
-    return [coord for coord in state.keys() if state[coord].player != new_state[coord].player]   
+    return [
+        coord
+        for coord in state.keys()
+        if state[coord].player != new_state[coord].player
+    ]
+
 
 def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """
@@ -80,7 +100,6 @@ class SimBoard:
         self._state: dict[Coord, CellState] = init_state
         self._turn_color: PlayerColor = init_color
         self._turn_count: int = 0
-        self._actions: list[Action]
 
     def apply_action(self, action: Action | None = None):
         """
@@ -97,8 +116,6 @@ class SimBoard:
 
         self._turn_color = self._turn_color.opponent
         self._turn_count += 1
-
-        # print(self.render(True))
 
     def clear_lines(self, action: Action):
         """
@@ -155,6 +172,11 @@ class SimBoard:
             output += "\n"
         return output
 
+    def copy(self):
+        new_board = SimBoard(self._state.copy(), self._turn_color)
+        new_board._turn_count = self._turn_count
+        return new_board
+
     def __getitem__(self, coord: Coord) -> CellState:
         return self._state[coord]
 
@@ -182,8 +204,8 @@ class SimBoard:
     def _player_token_count(self, color: PlayerColor) -> int:
         return sum(1 for cell in self._state.values() if cell.player == color)
 
-    def _occupied_coords(self) -> set[Coord]:
-        return set(filter(self._cell_occupied, self._state.keys()))
+    def _occupied_coords(self) -> list[Coord]:
+        return list(filter(self._cell_occupied, self._state.keys()))
 
     def __eq__(self, other):
         return self._state == other.state
@@ -217,25 +239,27 @@ class SimBoard:
         """
         return (
             self.turn_limit_reached
-            or not has_action(self._state, PlayerColor.RED)
-            or not has_action(self._state, PlayerColor.BLUE)
+            or not has_action(self._state, self._turn_color)
+            and self.turn_count > 1
         )
 
     @property
-    def winner(self) -> PlayerColor | None:
+    def winner_color(self) -> PlayerColor | None:
         if not self.game_over:
             return None
-        if not has_action(self._state, PlayerColor.RED):
-            return PlayerColor.BLUE
-        if not has_action(self._state, PlayerColor.BLUE):
-            return PlayerColor.RED
+        if not has_action(self._state, self._turn_color):
+            return self._turn_color.opponent
+        if not has_action(self._state, self._turn_color.opponent):
+            return self._turn_color
         if self.turn_limit_reached:
             # print("turn limit reached")
+            if self._player_token_count(PlayerColor.RED) == self._player_token_count(
+                PlayerColor.BLUE
+            ):
+                return None
             return (
                 PlayerColor.RED
                 if self._player_token_count(PlayerColor.RED)
                 > self._player_token_count(PlayerColor.BLUE)
                 else PlayerColor.BLUE
             )
-
-    # TODO: what happens on turn_limit_reached?

@@ -1,21 +1,30 @@
-# Project Part B
+# COMP30024 Artificial Intelligence, Semester 1 2024
 
-## Agents
+## Project Part B: Game Playing Agent
+
+### Agents
 
 - `agent_random` - random agent
-- `agent_next` - (experimental) game-within-a-game agent
-- `agent_mcts` - MCTS agent
+- `agent_experimental` - experimental game-within-a-game agent
+- `agent` - MCTS agent
 
-## Running the project
+### Running the project
 
 python -m referee -c [agent] [agent]
-(e.g python -m referee -c agent_random agent_mcts)
 
-## Testing the project
+- (e.g python -m referee -c agent_random agent)
+
+#### Running with limits
+
+python -m referee -s 250 -t 180.0 -c [agent] [agent]
+
+- (e.g python -m referee -s 250 -t 180.0 -c agent_random agent)
+
+### Testing the project
 
 1. python -m pip install snakeviz
 
-2. python -m cProfile -o test.prof test.py [agent] [agent]
-(e.g python -m cProfile -o test.prof test.py agent_random agent_mcts)
+2. python test.py [agent] [agent]
+   - (e.g python test.py agent_random agent)
 
 3. snakeviz test.prof

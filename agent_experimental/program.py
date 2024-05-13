@@ -6,8 +6,8 @@ from collections import defaultdict
 import copy
 import random
 from typing import AsyncGenerator
-from helpers.movements import valid_moves, valid_coords
-from helpers.tetrominoes import make_tetrominoes
+from agent.helpers.movements import valid_moves, valid_coords
+from agent.helpers.tetrominoes import make_tetrominoes
 from referee.agent.client import RemoteProcessClassClient
 from referee.game import (
     BoardUpdate,
@@ -34,10 +34,6 @@ from referee.run import (
 )
 from referee.agent import Player, AgentProxyPlayer
 from referee.options import PlayerLoc
-
-# import tensorflow as tf
-
-# TODO: redesign Board data structure to be more efficient
 
 
 class Agent:
@@ -189,7 +185,7 @@ class Agent:
             else:
                 break
         # if no valid moves available
-        if valid_moves(self.game_state,  coord) == []:
+        if valid_moves(self.game_state, coord) == []:
             return Action(Coord(0, 0), Coord(0, 0), Coord(0, 0), Coord(0, 0))
         return random.choice(valid_moves(self.game_state, coord))
 
