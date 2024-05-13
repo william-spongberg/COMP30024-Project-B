@@ -128,7 +128,7 @@ class MCTSNode:
                 if not current_node:
                     warnings.warn("ERROR: No tree policy node found in rollout")
                     return self.board.turn_count
-                current_node.backpropagate(current_node.board.winner, self.color)
+                current_node.backpropagate(current_node.board.winner)
             tried_times += 1
             push_steps.append(this_push_step)
         _sum = 0
@@ -165,18 +165,18 @@ class MCTSNode:
             current_node.winning_color = self.color.opponent
         return current_node
 
-    def backpropagate(self, result: PlayerColor | None, root_color: PlayerColor):
+    def backpropagate(self, result: PlayerColor | None):
         """
         Backpropagate the result of the simulation up the tree
         """
         self.num_visits += 1
-        if result == root_color:
+        if result == self.color:
             self.results[1] += 1
         # elif result == root_color.opponent:
         #     self.results[-1] += 1
         if self.parent:
             self.parent.danger = self.danger
-            self.parent.backpropagate(result, root_color)
+            self.parent.backpropagate(result)
 
     def best_child(self, c_param=1.4) -> "MCTSNode":
         """
@@ -243,7 +243,7 @@ class MCTSNode:
             # rollout with heuristic and max_steps
             end_node = v.new_rollout(steps)
             if end_node:
-                end_node.backpropagate(end_node.winning_color, self.color)
+                end_node.backpropagate(end_node.winning_color)
             sim_count += 1
             # rollout to the end of the game
             # end_node = v.rollout()
