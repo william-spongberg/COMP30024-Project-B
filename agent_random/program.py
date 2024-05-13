@@ -8,12 +8,13 @@ from helpers.bit_board import BitBoard, bit_generate_random_move
 from helpers.sim_board import SimBoard
 from helpers.movements import generate_random_move
 from referee.game import PlayerColor, Action, Action
+from referee.game.board import Board
 
 
 class Agent:
 
     # attributes
-    board: BitBoard  # state of game
+    board: SimBoard  # state of game
     color: PlayerColor  # agent colour
     name: str  # agent name
     opponent: PlayerColor  # agent opponent
@@ -23,14 +24,14 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         if self.board.turn_count < 2:
-            return bit_generate_random_move(self.board, self.color, first_turns=True)
-        return bit_generate_random_move(self.board, self.color)
+            return generate_random_move(self.board._state, self.color, first_turns=True)
+        return generate_random_move(self.board._state, self.color)
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         self.board.apply_action(action)
 
     def init(self, color: PlayerColor):
-        self.board = BitBoard()
+        self.board = SimBoard()
         self.color = color
         self.name = "Agent_Random " + self.color.name
         self.opponent = self.color.opponent
