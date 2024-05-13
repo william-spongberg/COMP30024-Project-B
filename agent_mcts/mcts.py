@@ -119,7 +119,7 @@ class MCTSNode:
                 current_board.apply_action(generate_random_move(
                     current_board.state, current_board.turn_color))
                 this_push_step += 1
-            if current_board.winner == current_node.color:
+            if current_board.winner_color == current_node.color:
                 current_node.results[1] += 1
             tried_times += 1
             push_steps.append(this_push_step+1)
@@ -139,7 +139,7 @@ class MCTSNode:
                     current_board.state, current_board.turn_color))
             print("turn_count: ", current_board.turn_count, self.board.turn_count)
             push_step += 1
-        if current_board.winner == self.color:
+        if current_board.winner_color == self.color:
             # backpropagate the result
             self.results[1] += 1
             return
