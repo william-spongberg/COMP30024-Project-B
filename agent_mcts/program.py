@@ -6,7 +6,6 @@ import random
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
-from helpers.bit_board import BitBoard
 from helpers.movements import check_adjacent_cells, generate_random_move, is_valid
 from helpers.sim_board import SimBoard
 from timeit import default_timer as timer
@@ -15,9 +14,11 @@ from referee.game import (
     Action,
     Action,
     Coord,
+    board,
 )
 from referee.game.constants import MAX_TURNS
 
+DEPTH = 10
 NARROW_SIM_NO = 200
 BACKUP_TIME = 5
 NARROW_MOVE_NO = 70
@@ -25,7 +26,7 @@ NARROW_MOVE_NO = 70
 class Agent:
 
     # attributes
-    board: BitBoard  # state of game
+    board: SimBoard  # state of game
     root: (
         MCTSNode | None
     )  # root node of MCTS tree NOTE: not to initialise until after first two turns
@@ -43,14 +44,14 @@ class Agent:
                 self.root = MCTSNode(self.board.copy())
                 
         # branching factor too high, pick random
-        if (len(self.root.my_actions) > 150 or self.root.estimated_time < 0):
+        if self.root.estimated_time < 0 or (len(self.root.my_actions) > 200 and self.board.turn_count < 10):
             return self.random_move()
         
         # time count
         if referee:
             start_time = timer()
             time_remaining:float = referee["time_remaining"] # type: ignore
-            estimate_turns = self.root.rollout_turns(3)
+            estimate_turns = self.root.rollout_turns(5)
             if estimate_turns == 0:
                 estimate_turns = MAX_TURNS - self.board.turn_count
             estimation_cost = timer() - start_time
@@ -63,9 +64,11 @@ class Agent:
         
         self.root.estimated_time = estimated_time
 
-        if len(self.root.my_actions) < NARROW_MOVE_NO and not self.root.danger:
+        if len(self.root.my_actions) > NARROW_MOVE_NO:
             # not to waste time on too many branches
             action = self.root.greedy_explore()
+            # action = self.root.best_action(DEPTH,
+            #     min((int)(len(self.root.my_actions)), NARROW_SIM_NO))
         else:
             # take it serious on intensive situations
             action = self.root.best_action(
@@ -88,7 +91,7 @@ class Agent:
         # print(self.root.board.render(True))
 
     def init(self, color: PlayerColor):
-        self.board = BitBoard()
+        self.board = SimBoard()
         self.color = color
         self.root = None
         self.name = "Agent_MCTS " + self.color.name
