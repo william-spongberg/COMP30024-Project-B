@@ -40,14 +40,14 @@ class MCTSNode:
                 parent.board.state,
                 self.board.state,
                 parent.my_actions,
-                parent.color,
+                parent.color
             )
             if parent.parent:
                 self.my_actions = update_actions(
                     parent.parent.board.state,
                     self.board.state,
                     parent.parent.my_actions,
-                    board.turn_color,
+                    board.turn_color
                 )
         else:
             self.my_actions = find_actions(board.state, board.turn_color)
@@ -122,7 +122,7 @@ class MCTSNode:
             if current_board.winner == current_node.color:
                 current_node.results[1] += 1
             tried_times += 1
-            push_steps.append(this_push_step)
+            push_steps.append(this_push_step+1)
         avg = mean(push_steps)
         result = round(avg / 2) # half of the turns are ours
         return result
@@ -137,6 +137,7 @@ class MCTSNode:
         while not current_board.game_over and push_step < max_steps:
             current_board.apply_action(generate_random_move(
                     current_board.state, current_board.turn_color))
+            print("turn_count: ", current_board.turn_count, self.board.turn_count)
             push_step += 1
         if current_board.winner == self.color:
             # backpropagate the result
@@ -241,16 +242,16 @@ class MCTSNode:
         """
         return random.choice(list(self.my_actions))
     
-    def heuristics_judge(self) -> int:
+    def heuristics_judge(self) -> float:
         """
         heuristic function to predict if this player is winning
         """ 
         result = len(self.my_actions) - len(self.opp_actions)
         # let the number of tokens be the tie breaker if the turn_count is close to the max
         if self.board.turn_count > CLOSE_TO_END:
-            result += round((self.board._player_token_count(self.color)
-                             - self.board._player_token_count(self.color.opponent)) 
-                            / (MAX_TURNS - self.board.turn_count))
+            result += ((self.board._player_token_count(self.color)
+                            - self.board._player_token_count(self.color.opponent)) 
+                            / (MAX_TURNS - self.board.turn_count + 1))
         return result
     
     def greedy_explore(self) -> Action | None:

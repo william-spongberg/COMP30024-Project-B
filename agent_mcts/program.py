@@ -66,8 +66,9 @@ class Agent:
 
         if len(self.root.my_actions) > NARROW_MOVE_NO:
             # not to waste time on too many branches
-            action = self.root.best_action(DEPTH,
-                min((int)(len(self.root.my_actions)), NARROW_SIM_NO))
+            action = self.root.greedy_explore()
+            # action = self.root.best_action(DEPTH,
+            #     min((int)(len(self.root.my_actions)), NARROW_SIM_NO))
         else:
             # take it serious on intensive situations
             action = self.root.best_action(
