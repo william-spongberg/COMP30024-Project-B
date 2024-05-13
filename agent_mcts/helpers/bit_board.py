@@ -1,6 +1,6 @@
 import random
 from helpers.movements import valid_coords, valid_moves_of_any_empty
-from helpers.sim_board import changed_coords, has_action, check_adjacent_cells
+from helpers.sim_board import has_action
 from helpers.tetrominoes import make_tetrominoes
 from referee.game.actions import Action
 from referee.game.board import CellState
@@ -29,7 +29,7 @@ def bit_valid_moves_of_any_empty(
     if board._cell_occupied(coord):
         print("invalid coord")
         exit(1)
-        
+
     moves = []
     for move in bit_valid_moves(board, coord):
         if bit_check_adjacent_cells(board, list(move.coords), color):
@@ -46,7 +46,7 @@ def bit_generate_random_move(
         coords.remove(coord)
         moves = bit_valid_moves(board, coord)
         if moves:
-            #print(f"generated {len(moves)} valid moves at {coord}")
+            # print(f"generated {len(moves)} valid moves at {coord}")
             return random.choice(moves)
     print("ERROR: no valid moves available")
     exit(1)
@@ -67,24 +67,6 @@ def bit_valid_moves(board: "BitBoard", coord: Coord) -> list[Action]:
         if bit_is_valid(board, action):
             valid_moves.append(action)
     return valid_moves
-
-
-# *logically incorrect*
-# only way to work is same as already implemented, no need in re-writing
-
-# def bit_valid_coords(
-#     board: "BitBoard", player_color: PlayerColor, first_turns: bool = False
-# ) -> list[Coord]:
-#     if first_turns and board._red_state == 0 and board._blue_state == 0:
-#         return [Coord(r, c) for r in range(BOARD_N) for c in range(BOARD_N)]
-#     state = board.state #board.red_state if player_color == PlayerColor.RED else board.blue_state
-#     valid_coords = []
-#     for coord in state.keys():
-#         for dir in Direction:
-#             adjacent = coord + dir
-#             if board._cell_empty(adjacent):
-#                 valid_coords.append(adjacent)
-#     return valid_coords
 
 
 def bit_is_valid(board: "BitBoard", piece: Action) -> bool:
@@ -112,7 +94,7 @@ def bit_update_actions(
     invalid_actions = set()
     for action in my_actions_set:
         if not bit_is_valid(new_board, action):
-            #print(f"Action {action} is not valid")
+            # print(f"Action {action} is not valid")
             invalid_actions.add(action)
         elif not bit_check_adjacent_cells(new_board, list(action.coords), color):
             # print(f"No adjacent cells for action {action}")
@@ -133,12 +115,13 @@ def bit_update_actions(
                     if not new_moves:
                         print(f"No valid moves for adjacent cell at {adjacent}")
                     my_actions_set.update(new_moves)
-                    
+
     # debug log
-    if (len(my_actions) == len(invalid_actions)):
+    if len(my_actions) == len(invalid_actions):
         print(prev_board.render(use_color=True))
         print(new_board.render(use_color=True))
     return list(my_actions_set)
+
 
 # function sturcture from old update_actions, works fine with bitboard
 def bit_a_update_actions(
@@ -152,12 +135,16 @@ def bit_a_update_actions(
     """
     my_actions_set = set(my_actions)
     for action in my_actions_set.copy():
-        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(new_board, list(action.coords), color):
+        if not bit_is_valid(new_board, action) or not bit_check_adjacent_cells(
+            new_board, list(action.coords), color
+        ):
             my_actions_set.remove(action)
     for coord in bit_changed_coords(prev_board, new_board):
         # two situations: new empty/new needed color
         if new_board[coord].player is None:
-            my_actions_set.update(valid_moves_of_any_empty(new_board.state, coord, color))
+            my_actions_set.update(
+                valid_moves_of_any_empty(new_board.state, coord, color)
+            )
         elif new_board[coord].player == color:
             # looking for empty adjacent cells
             for adjacent in [coord + dir for dir in Direction]:
@@ -186,7 +173,6 @@ def bit_has_action(board: "BitBoard", color: PlayerColor) -> bool:
 
 
 class BitBoard:
-    # TODO: allow init_state
     def __init__(
         self,
         init_state: dict[Coord, CellState] | None = None,

@@ -13,6 +13,7 @@ from timeit import default_timer as timer
 
 CLOSE_TO_END = 100
 
+
 class MCTSNode:
     """
     Node class for the Monte Carlo Tree Search algorithm
@@ -37,26 +38,23 @@ class MCTSNode:
         # parent.parent: parent with same color
         if parent:
             self.opp_actions = update_actions(
-                parent.board.state,
-                self.board.state,
-                parent.my_actions,
-                parent.color
+                parent.board.state, self.board.state, parent.my_actions, parent.color
             )
             if parent.parent:
                 self.my_actions = update_actions(
                     parent.parent.board.state,
                     self.board.state,
                     parent.parent.my_actions,
-                    board.turn_color
+                    board.turn_color,
                 )
         else:
             self.my_actions = find_actions(board.state, board.turn_color)
             self.opp_actions = find_actions(board.state, board.turn_color.opponent)
-            if (len(self.my_actions) == 0):
+            if len(self.my_actions) == 0:
                 print("ERROR: bit_find_actions returned no actions")
 
         self.untried_actions = self.my_actions.copy()  # actions not yet tried
-        
+
         self.__action_to_children: dict[Action, "MCTSNode"] = (
             {}
         )  # my actions to child node
@@ -84,11 +82,7 @@ class MCTSNode:
 
         board_node.apply_action(action)
 
-        child_node: MCTSNode = MCTSNode(
-            board_node,
-            parent=self,
-            parent_action=action
-        )
+        child_node: MCTSNode = MCTSNode(board_node, parent=self, parent_action=action)
         child_node.estimated_time = self.estimated_time
         if action in self.untried_actions:
             self.untried_actions.remove(action)
@@ -110,26 +104,27 @@ class MCTSNode:
         print("rolling out for turns")
         push_steps = []
         tried_times = 0
-        while (tried_times != times):
+        while tried_times != times:
             current_node = self.tree_policy()
             if not current_node:
                 break
             current_board = current_node.board.copy()
             this_push_step = 0
             while not current_board.game_over:
-                current_board.apply_action(generate_random_move(
-                    current_board.state, current_board.turn_color))
+                current_board.apply_action(
+                    generate_random_move(current_board.state, current_board.turn_color)
+                )
                 this_push_step += 1
             if current_board.winner_color == current_node.color:
                 current_node.results[1] += 1
             else:
                 current_node.results[-1] += 1
             tried_times += 1
-            push_steps.append(this_push_step+1)
+            push_steps.append(this_push_step + 1)
         avg = mean(push_steps)
-        result = round(avg / 2) # half of the turns are ours
+        result = round(avg / 2)  # half of the turns are ours
         return result
-    
+
     def new_rollout(self, max_steps) -> None:
         """
         Simulate a random v random game from the current node
@@ -138,8 +133,9 @@ class MCTSNode:
         push_step = 0
         current_board = self.board.copy()
         while not current_board.game_over and push_step < max_steps:
-            current_board.apply_action(generate_random_move(
-                    current_board.state, current_board.turn_color))
+            current_board.apply_action(
+                generate_random_move(current_board.state, current_board.turn_color)
+            )
             push_step += 1
         if current_board.winner_color == self.color:
             # backpropagate the result
@@ -216,13 +212,13 @@ class MCTSNode:
             if v.is_terminal_node() and v.board.winner_color == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
-            v.new_rollout(steps-1)
+            v.new_rollout(steps - 1)
             sim_count += 1
         print("sim_count: ", sim_count)
-        
+
         # time per simulation average
         print("average time per simulation: ", (timer() - start_time) / sim_count)
-        
+
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:
@@ -232,19 +228,20 @@ class MCTSNode:
         # if no best child, print error + return None
         print("ERROR: No best child found")
         return None
-    
+
     def heuristics_judge(self) -> float:
         """
         heuristic function to predict if this player is winning
-        """ 
+        """
         result = len(self.my_actions) - len(self.opp_actions)
         # let the number of tokens be the tie breaker if the turn_count is close to the max
         if self.board.turn_count > CLOSE_TO_END:
-            result += ((self.board._player_token_count(self.color)
-                            - self.board._player_token_count(self.color.opponent)) 
-                            / (MAX_TURNS - self.board.turn_count + 1))
+            result += (
+                self.board._player_token_count(self.color)
+                - self.board._player_token_count(self.color.opponent)
+            ) / (MAX_TURNS - self.board.turn_count + 1)
         return result
-    
+
     def chop_nodes_except(self, node: "MCTSNode | None" = None):
         """
         To free up memory, delele all useless nodes

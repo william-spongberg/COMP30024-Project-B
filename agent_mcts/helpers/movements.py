@@ -1,6 +1,6 @@
 import random
 from .tetrominoes import make_tetrominoes
-from referee.game import PlayerColor, Coord, Action, Direction, actions
+from referee.game import PlayerColor, Coord, Action, Direction
 from referee.game.board import CellState
 
 
@@ -77,6 +77,7 @@ def valid_coords(
         for adjacent in [coord + dir for dir in Direction]
         if state[adjacent].player is None
     ]
+
 
 def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     """

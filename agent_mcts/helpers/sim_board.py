@@ -1,4 +1,11 @@
-from .movements import has_valid_move, valid_coords, valid_moves, is_valid, check_adjacent_cells, valid_moves_of_any_empty
+from .movements import (
+    has_valid_move,
+    valid_coords,
+    valid_moves,
+    is_valid,
+    check_adjacent_cells,
+    valid_moves_of_any_empty,
+)
 from referee.game.constants import BOARD_N
 from referee.game.actions import Action
 from referee.game.board import CellState
@@ -18,14 +25,21 @@ def find_actions(state: dict[Coord, CellState], color: PlayerColor) -> list[Acti
     actions = list(set(actions))
     return actions
 
-def update_actions(prev_state: dict[Coord, CellState], 
-                   new_state: dict[Coord, CellState], my_actions: list[Action], color: PlayerColor):
+
+def update_actions(
+    prev_state: dict[Coord, CellState],
+    new_state: dict[Coord, CellState],
+    my_actions: list[Action],
+    color: PlayerColor,
+):
     """
     Get a new list of actions that are valid for the current state
     """
     my_actions_set = my_actions.copy()
     for action in my_actions_set.copy():
-        if not is_valid(new_state, action) or not check_adjacent_cells(action, new_state, color):
+        if not is_valid(new_state, action) or not check_adjacent_cells(
+            action, new_state, color
+        ):
             my_actions_set.remove(action)
     for coord in changed_coords(prev_state, new_state):
         # two situations: new empty/new needed color
@@ -37,12 +51,20 @@ def update_actions(prev_state: dict[Coord, CellState],
                 if new_state[adjacent].player is None:
                     my_actions_set.extend(valid_moves(new_state, adjacent))
     return list(set(my_actions_set))
-        
-def changed_coords(state: dict[Coord, CellState], new_state: dict[Coord, CellState]) -> list[Coord]:
+
+
+def changed_coords(
+    state: dict[Coord, CellState], new_state: dict[Coord, CellState]
+) -> list[Coord]:
     """
     Get all coordinates that have changed
     """
-    return [coord for coord in state.keys() if state[coord].player != new_state[coord].player]        
+    return [
+        coord
+        for coord in state.keys()
+        if state[coord].player != new_state[coord].player
+    ]
+
 
 def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
     """
@@ -149,7 +171,7 @@ class SimBoard:
                 output += " "
             output += "\n"
         return output
-    
+
     def copy(self):
         new_board = SimBoard(self._state.copy(), self._turn_color)
         new_board._turn_count = self._turn_count
@@ -217,7 +239,8 @@ class SimBoard:
         """
         return (
             self.turn_limit_reached
-            or not has_action(self._state, self._turn_color) and self.turn_count > 1
+            or not has_action(self._state, self._turn_color)
+            and self.turn_count > 1
         )
 
     @property
@@ -240,4 +263,3 @@ class SimBoard:
                 > self._player_token_count(PlayerColor.BLUE)
                 else PlayerColor.BLUE
             )
-

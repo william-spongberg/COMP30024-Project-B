@@ -1,14 +1,9 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
-import copy
-import random
-
-from agent_mcts.helpers.bit_board import BitBoard, bit_generate_random_move
 from agent_mcts.helpers.sim_board import SimBoard
 from agent_mcts.helpers.movements import generate_random_move
 from referee.game import PlayerColor, Action, Action
-from referee.game.board import Board
 
 
 class Agent:
