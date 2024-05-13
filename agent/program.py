@@ -3,7 +3,7 @@
 
 import random
 
-from agent_mcts.mcts import MCTSNode
+from agent.mcts import MCTSNode
 from .helpers.movements import check_adjacent_cells, generate_random_move, is_valid
 from .helpers.sim_board import SimBoard
 from timeit import default_timer as timer

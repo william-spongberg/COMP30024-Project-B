@@ -6,8 +6,8 @@ from collections import defaultdict
 import copy
 import random
 from typing import AsyncGenerator
-from agent_mcts.helpers.movements import valid_moves, valid_coords
-from agent_mcts.helpers.tetrominoes import make_tetrominoes
+from agent.helpers.movements import valid_moves, valid_coords
+from agent.helpers.tetrominoes import make_tetrominoes
 from referee.agent.client import RemoteProcessClassClient
 from referee.game import (
     BoardUpdate,

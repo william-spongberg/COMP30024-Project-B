@@ -3,11 +3,11 @@ import pstats
 import sys
 from timeit import default_timer as timer
 
-from agent_mcts.program import AgentMCTS
+from agent.program import AgentMCTS
 from agent_random.program import AgentRandom
-from agent_mcts.helpers.bit_board import BitBoard
-from agent_mcts.helpers.sim_board import SimBoard
-from agent_mcts.helpers.tetrominoes import test_tetronimoes
+from agent.helpers.bit_board import BitBoard
+from agent.helpers.sim_board import SimBoard
+from agent.helpers.tetrominoes import test_tetronimoes
 from referee.game.board import Board
 from referee.game.player import PlayerColor
 
