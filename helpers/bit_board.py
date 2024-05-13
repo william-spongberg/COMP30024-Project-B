@@ -1,6 +1,6 @@
 import random
-from helpers.movements import valid_coords
-from helpers.sim_board import has_action
+from helpers.movements import valid_coords, valid_moves_of_any_empty
+from helpers.sim_board import changed_coords, has_action, check_adjacent_cells
 from helpers.tetrominoes import make_tetrominoes
 from referee.game.actions import Action
 from referee.game.board import CellState
@@ -160,7 +160,7 @@ def bit_a_update_actions(
     for coord in bit_changed_coords(prev_board, new_board):
         # two situations: new empty/new needed color
         if new_board[coord].player is None:
-            my_actions_set.update(bit_valid_moves_of_any_empty(new_board, coord, color))
+            my_actions_set.update(valid_moves_of_any_empty(new_board.state, coord, color))
         elif new_board[coord].player == color:
             # looking for empty adjacent cells
             for adjacent in [coord + dir for dir in Direction]:

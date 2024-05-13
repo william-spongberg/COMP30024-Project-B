@@ -18,13 +18,9 @@ from referee.game import (
 )
 from referee.game.constants import MAX_TURNS
 
-# WIDE_SIM_NO = 100
-MEDIUM_SIM_NO = 150
 NARROW_SIM_NO = 200
 BACKUP_TIME = 5
-# WIDE_DEPTH = 2
-MEDIUM_DEPTH = 6
-NARROW_DEPTH = 10
+NARROW_MOVE_NO = 70
 
 class Agent:
 
@@ -46,14 +42,15 @@ class Agent:
             if not self.root:
                 self.root = MCTSNode(self.board.copy())
                 
-        if (self.root.parent and self.root.estimated_time < 0):
+        # branching factor too high, pick random
+        if (len(self.root.my_actions) > 150 or self.root.estimated_time < 0):
             return self.random_move()
         
         # time count
         if referee:
             start_time = timer()
             time_remaining:float = referee["time_remaining"] # type: ignore
-            estimate_turns = self.root.rollout_turns(4)
+            estimate_turns = self.root.rollout_turns(3)
             if estimate_turns == 0:
                 estimate_turns = MAX_TURNS - self.board.turn_count
             estimation_cost = timer() - start_time
@@ -66,9 +63,9 @@ class Agent:
         
         self.root.estimated_time = estimated_time
 
-        if estimate_turns > NARROW_DEPTH and not self.root.danger:
+        if len(self.root.my_actions) < NARROW_MOVE_NO and not self.root.danger:
             # not to waste time on too many branches
-            action = self.root.heuristic_greedy()
+            action = self.root.greedy_explore()
         else:
             # take it serious on intensive situations
             action = self.root.best_action(

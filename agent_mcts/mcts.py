@@ -6,6 +6,7 @@ import warnings
 from helpers.bit_board import BitBoard, bit_find_actions, bit_update_actions, bit_a_update_actions
 from helpers.movements import check_adjacent_cells, is_valid
 from helpers.sim_board import SimBoard, find_actions, update_actions
+from referee import agent
 from referee.game.actions import Action
 from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
@@ -13,9 +14,6 @@ from referee.game.coord import Coord
 from referee.game.player import PlayerColor
 from timeit import default_timer as timer
 
-# generally want to make more efficient (want at least 100 sims per move)
-# TODO: implement asynchronous MCTS to allow searching to continue while waiting for opponent move
-# not allowed in specifcation?
 
 CLOSE_TO_END = 100
 
@@ -134,8 +132,9 @@ class MCTSNode:
         _sum = 0
         for i in push_steps:
             _sum += i
-        avg = _sum / len(push_steps)
-        return round(avg)
+        avg = _sum / tried_times
+        result = round(avg / 2) # half of the turns are ours
+        return result
     
     def new_rollout(self, max_steps) -> 'MCTSNode | None':
         """
@@ -159,7 +158,7 @@ class MCTSNode:
             current_node.danger = True
             current_node.winning_color = current_node.board.winner
             return current_node
-        if current_node.heuristics_judge() > self.heuristics_judge():
+        if current_node.greedy_judge(self.color) > self.greedy_judge(self.color):
             current_node.winning_color = self.color
         else:
             current_node.winning_color = self.color.opponent
@@ -236,8 +235,6 @@ class MCTSNode:
                 print("ERROR: No tree policy node found")
                 return None
             # simulation
-            # print("simulating")
-            # print("rolling out: ", i)
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
@@ -245,21 +242,11 @@ class MCTSNode:
             if end_node:
                 end_node.backpropagate(end_node.winning_color)
             sim_count += 1
-            # rollout to the end of the game
-            # end_node = v.rollout()
-            # if not end_node:
-            #     print("ERROR: No winner found")
-            #     return None
-            # end_node.backpropagate(end_node.board.winner)
         print("sim_count: ", sim_count)
         # return best action
         best_child = self.best_child(c_param=0.0)
         if best_child:
             print("best action: ", best_child.parent_action)
-            # temp_board = SimBoard(best_child.board.state, best_child.board.turn_color)
-            # temp_board.apply_action(best_child.parent_action)
-            # temp_board.turn_color = temp_board.turn_color.opponent
-            # print(temp_board.render(True))
             return best_child.parent_action
 
         # if no best child, print error + return None
@@ -271,18 +258,20 @@ class MCTSNode:
         Get a random move for the current state
         """
         return random.choice(list(self.my_actions))
-
-    def heuristics_judge(self) -> int:
+    
+    def greedy_judge(self, agent_color: PlayerColor|None = None) -> int:
         """
         heuristic function to predict if this player is winning
         """ 
+        if agent_color == None:
+            agent_color = self.color
         result = 0
-        if self.parent:
-            result -= len(self.parent.my_actions)
+        if self.color == agent_color:
+            result += len(self.my_actions)
         else:
-            result -= len(find_actions(self.board.state, self.color.opponent))
+            result -= len(self.my_actions)
         if self.board.turn_count > CLOSE_TO_END:
-            if self.color == PlayerColor.RED:
+            if agent_color == PlayerColor.RED:
                 result += round((self.board._red_state - self.board._blue_state) + 
                                 len(self.my_actions)/ MAX_TURNS - self.board.turn_count)
             else:
@@ -290,18 +279,20 @@ class MCTSNode:
                                  len(self.my_actions)) / MAX_TURNS - self.board.turn_count)
         return result
     
-    def heuristic_greedy(self) -> Action | None:
+    def greedy_explore(self) -> Action | None:
         """
         Pick the action with the highest heuristic value
         """
         start_time = timer()
         best_action : Action| None = None
         best_value = float("-inf")
-        for action in self.my_actions:
+        while self.untried_actions:
             if timer() - start_time > self.estimated_time:
                 break
+            action = random.choice(self.untried_actions)
+            # new_node is opponent's turn
             new_node = self.get_child(action)
-            value = new_node.heuristics_judge()
+            value = new_node.greedy_judge(self.color)
             if value > best_value:
                 best_value = value
                 best_action = action
@@ -344,6 +335,6 @@ class MCTSNode:
         if action in self.__action_to_children:
             return self.__action_to_children[action]
         else:
+            # did not expand it
             self.expand(action)
-            # print("had to expand")
             return self.__action_to_children[action]
