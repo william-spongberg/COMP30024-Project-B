@@ -42,9 +42,9 @@ class MCTSNode:
         # parent.parent: parent with same color
         if parent and parent.parent and parent.parent.my_actions:
             self.my_actions = parent.parent.my_actions.copy()
-            self.my_actions = bit_a_update_actions(
-                parent.parent.board,
-                self.board,
+            self.my_actions = update_actions(
+                parent.parent.board.state,
+                self.board.state,
                 self.my_actions,
                 board.turn_color,
             )
@@ -118,7 +118,7 @@ class MCTSNode:
         push_steps = []
         current_node = self
         tried_times = 0
-        while (not tried_times == times):
+        while (tried_times != times):
             this_push_step = 0
             while not current_node.is_terminal_node():
                 # light playout policy
@@ -131,10 +131,10 @@ class MCTSNode:
                 current_node.backpropagate(current_node.board.winner, self.color)
             tried_times += 1
             push_steps.append(this_push_step)
-        sum = 0
+        _sum = 0
         for i in push_steps:
-            sum += i
-        avg = sum / len(push_steps)
+            _sum += i
+        avg = _sum / len(push_steps)
         return round(avg)
     
     def new_rollout(self, max_steps) -> 'MCTSNode | None':
