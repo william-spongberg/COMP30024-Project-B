@@ -3,8 +3,8 @@ from math import log
 from collections import defaultdict
 from statistics import mean
 
-from helpers.movements import generate_random_move
-from helpers.sim_board import SimBoard, find_actions, update_actions
+from .movements import generate_random_move
+from .sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
 from referee.game.constants import MAX_TURNS
 from referee.game.player import PlayerColor
@@ -140,7 +140,6 @@ class MCTSNode:
         while not current_board.game_over and push_step < max_steps:
             current_board.apply_action(generate_random_move(
                     current_board.state, current_board.turn_color))
-            print("turn_count: ", current_board.turn_count, self.board.turn_count)
             push_step += 1
         if current_board.winner_color == self.color:
             # backpropagate the result
@@ -155,18 +154,6 @@ class MCTSNode:
         elif end_node.heuristics_judge() < 0 and self.color != end_node.color:
             self.results[1] += 1
         return
-    
-    # def backpropagate(self, result: PlayerColor | None):
-    #     """
-    #     Backpropagate the result of the simulation up the tree
-    #     """
-    #     self.num_visits += 1
-    #     if result == self.color:
-    #         self.results[1] += 1
-    #     # elif result == root_color.opponent:
-    #     #     self.results[-1] += 1
-    #     if self.parent:
-    #         self.parent.backpropagate(result)
 
     def best_child(self, c_param=1.4) -> "MCTSNode":
         """
@@ -245,12 +232,6 @@ class MCTSNode:
         # if no best child, print error + return None
         print("ERROR: No best child found")
         return None
-
-    def get_random_move(self) -> Action | None:
-        """
-        Get a random move for the current state
-        """
-        return random.choice(list(self.my_actions))
     
     def heuristics_judge(self) -> float:
         """
@@ -263,26 +244,6 @@ class MCTSNode:
                             - self.board._player_token_count(self.color.opponent)) 
                             / (MAX_TURNS - self.board.turn_count + 1))
         return result
-    
-    def greedy_explore(self) -> Action | None:
-        """
-        Pick the action with the highest heuristic value
-        """
-        start_time = timer()
-        best_action : Action| None = None
-        best_value = float("-inf")
-        while self.untried_actions:
-            if timer() - start_time > self.estimated_time:
-                break
-            action = random.choice(self.untried_actions)
-            # new_node is opponent's turn
-            new_node = self.get_child(action)
-            value = new_node.heuristics_judge()
-            if value > best_value:
-                best_value = value
-                best_action = action
-                
-        return best_action
     
     def chop_nodes_except(self, node: "MCTSNode | None" = None):
         """
