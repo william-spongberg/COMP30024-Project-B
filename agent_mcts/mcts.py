@@ -66,6 +66,7 @@ class MCTSNode:
 
         self.results = defaultdict(int)
         self.results[1] = 0  # win
+        self.results[-1] = 0  # lose
 
         self.estimated_time: float = 0
 
@@ -121,6 +122,8 @@ class MCTSNode:
                 this_push_step += 1
             if current_board.winner_color == current_node.color:
                 current_node.results[1] += 1
+            else:
+                current_node.results[-1] += 1
             tried_times += 1
             push_steps.append(this_push_step+1)
         avg = mean(push_steps)
@@ -142,6 +145,9 @@ class MCTSNode:
         if current_board.winner_color == self.color:
             # backpropagate the result
             self.results[1] += 1
+            return
+        elif current_board.winner_color == self.color.opponent:
+            self.results[-1] += 1
             return
         end_node = MCTSNode(current_board)
         if end_node.heuristics_judge() > 0 and self.color == end_node.color:
@@ -170,10 +176,10 @@ class MCTSNode:
         best_child = None
         for child in self.__action_to_children.values():
             if child.num_visits <= 0 or self.num_visits <= 0:
-                exploit: float = child.results[1]
+                exploit: float = child.results[-1]
                 explore: float = 0.0
             else:
-                exploit: float = child.results[1] / child.num_visits
+                exploit: float = child.results[-1] / child.num_visits
                 explore: float = (
                     c_param * (log(self.num_visits) / child.num_visits) ** 0.5
                 )
