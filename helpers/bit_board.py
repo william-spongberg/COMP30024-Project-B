@@ -41,17 +41,15 @@ def bit_valid_moves_of_any_empty(
 def bit_generate_random_move(
     board: "BitBoard", color: PlayerColor, first_turns: bool = False
 ) -> Action:
-    if first_turns and color == PlayerColor.RED:
-        return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
     coords = valid_coords(board.state, color, first_turns)
     while coords:
         coord = random.choice(coords)
         coords.remove(coord)
         moves = bit_valid_moves(board, coord)
         if moves:
-            print(f"generated {len(moves)} valid moves at {coord}")
+            #print(f"generated {len(moves)} valid moves at {coord}")
             return random.choice(moves)
-    print("no valid moves available")
+    print("ERROR: no valid moves available")
     exit(1)
 
 
@@ -414,7 +412,7 @@ class BitBoard:
         )
 
     @property
-    def winner(self) -> PlayerColor | None:
+    def winner_color(self) -> PlayerColor | None:
         if not self.game_over:
             return None
         if not has_action(self.state, self._turn_color):

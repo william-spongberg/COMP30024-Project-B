@@ -37,8 +37,6 @@ def generate_random_move(
     """
     Generate a random move for a given state and player colour.
     """
-    if first_turns and color == PlayerColor.RED:
-        return Action(Coord(5, 5), Coord(5, 6), Coord(5, 7), Coord(5, 8))
     coords = valid_coords(state, color, first_turns)
     coord = random.choice(coords)
     coords.remove(coord)
