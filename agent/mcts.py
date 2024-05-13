@@ -53,11 +53,11 @@ class MCTSNode:
             if len(self.my_actions) == 0:
                 print("ERROR: bit_find_actions returned no actions")
 
-        self.untried_actions = self.my_actions.copy()  # actions not yet tried
+        # actions not yet tried
+        self.untried_actions = self.my_actions.copy()
 
-        self.__action_to_children: dict[Action, "MCTSNode"] = (
-            {}
-        )  # my actions to child node
+        # my actions to child node
+        self.__action_to_children: dict[Action, "MCTSNode"] = {}
 
         self.color: PlayerColor = board.turn_color
         self.num_visits = 0
@@ -149,7 +149,6 @@ class MCTSNode:
             self.results[1] += 1
         elif end_node.heuristics_judge() < 0 and self.color != end_node.color:
             self.results[1] += 1
-        return
 
     def best_child(self, c_param=1.4) -> "MCTSNode":
         """
@@ -214,10 +213,10 @@ class MCTSNode:
             # rollout with heuristic and max_steps
             v.new_rollout(steps - 1)
             sim_count += 1
+        
         print("sim_count: ", sim_count)
-
-        # time per simulation average
-        print("average time per simulation: ", (timer() - start_time) / sim_count)
+        if (sim_count > 0):
+            print("average time per simulation: ", (timer() - start_time) / sim_count)
 
         # return best action
         best_child = self.best_child(c_param=0.0)
