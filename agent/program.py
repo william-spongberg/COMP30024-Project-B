@@ -15,7 +15,7 @@ NARROW_DEPTH = 8
 NARROW_SIM_NO = 200
 NARROW_MOVE_NO = 100
 BACKUP_TIME = 5
-NUM_TURN_ESTIMATION_ROLLOUTS = 2
+NUM_TURN_ESTIMATION_ROLLOUTS = 3
 
 
 class Agent:
@@ -40,8 +40,6 @@ class Agent:
         # game state
         self.board = SimBoard()
         self.root = None
-        self.estimated_time = 0
-        self.estimated_turns = 0
 
         # announce agent
         print(f"{self.name} *initiated*: {self.color}")
@@ -99,10 +97,11 @@ class Agent:
     def set_timer(self, referee):
         start_time = timer()
         time_remaining: float = referee["time_remaining"]  # type: ignore
+        
         self.estimated_turns = self.root.rollout_turns(NUM_TURN_ESTIMATION_ROLLOUTS)  # type: ignore
-
         if self.estimated_turns == 0:
             self.estimated_turns = MAX_TURNS - self.board.turn_count
+            
         estimation_cost = timer() - start_time
         self.estimated_time = (
             time_remaining - estimation_cost - BACKUP_TIME
