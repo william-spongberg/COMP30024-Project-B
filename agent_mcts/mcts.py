@@ -3,8 +3,8 @@ from math import log
 from collections import defaultdict
 from statistics import mean
 
-from .movements import generate_random_move
-from .sim_board import SimBoard, find_actions, update_actions
+from .helpers.movements import generate_random_move
+from .helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
 from referee.game.constants import MAX_TURNS
 from referee.game.player import PlayerColor

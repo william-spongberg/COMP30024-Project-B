@@ -4,8 +4,8 @@
 import random
 
 from agent_mcts.mcts import MCTSNode
-from .movements import check_adjacent_cells, generate_random_move, is_valid
-from .sim_board import SimBoard
+from .helpers.movements import check_adjacent_cells, generate_random_move, is_valid
+from .helpers.sim_board import SimBoard
 from timeit import default_timer as timer
 from referee.game import (
     PlayerColor,

@@ -5,12 +5,11 @@ from timeit import default_timer as timer
 
 from agent_mcts.program import AgentMCTS
 from agent_random.program import AgentRandom
-from helpers.bit_board import BitBoard
-from helpers.sim_board import SimBoard
-from helpers.tetrominoes import test_tetronimoes
+from agent_mcts.helpers.bit_board import BitBoard
+from agent_mcts.helpers.sim_board import SimBoard
+from agent_mcts.helpers.tetrominoes import test_tetronimoes
 from referee.game.board import Board
 from referee.game.player import PlayerColor
-from referee.run import game_commentator
 
 
 def get_agents():
