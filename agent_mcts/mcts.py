@@ -1,15 +1,12 @@
 import random
-from math import ceil, log
+from math import log
 from collections import defaultdict
 from statistics import mean
-import warnings
 
-from helpers.bit_board import BitBoard, bit_find_actions, bit_update_actions, bit_a_update_actions
-from referee import agent
+from helpers.movements import generate_random_move
+from helpers.sim_board import SimBoard, find_actions, update_actions
 from referee.game.actions import Action
-from referee.game.board import CellState
 from referee.game.constants import MAX_TURNS
-from referee.game.coord import Coord
 from referee.game.player import PlayerColor
 from timeit import default_timer as timer
 
@@ -23,41 +20,42 @@ class MCTSNode:
 
     def __init__(
         self,
-        board: BitBoard,
+        board: SimBoard,
         parent: "MCTSNode | None" = None,
         parent_action: Action | None = None,
     ):
         """
         Initialize the node with the current board state
         """
-        self.board: BitBoard = board
+        self.board: SimBoard = board
         self.parent: MCTSNode | None = parent
         self.parent_action: Action | None = parent_action
 
-        self.my_actions: list[Action]
+        self.my_actions: list[Action] = []
+        self.opp_actions: list[Action] = []
 
         # parent.parent: parent with same color
-        if parent and parent.parent and parent.parent.my_actions:
-            self.my_actions = parent.parent.my_actions.copy()
-            self.my_actions = bit_a_update_actions(
-                parent.parent.board,
-                self.board,
-                self.my_actions,
-                board.turn_color,
+        if parent:
+            self.opp_actions = update_actions(
+                parent.board.state,
+                self.board.state,
+                parent.my_actions,
+                parent.color,
             )
-            # if (len(self.my_actions) == 0):
-            #     print("ERROR: bit_update_actions returned no actions")
-            #print(f"bit_update_actions found {len(self.my_actions)} actions")
+            if parent.parent:
+                self.my_actions = update_actions(
+                    parent.parent.board.state,
+                    self.board.state,
+                    parent.parent.my_actions,
+                    board.turn_color,
+                )
         else:
-            # print("no parent")
-            self.my_actions = bit_find_actions(board, board.turn_color)
+            self.my_actions = find_actions(board.state, board.turn_color)
+            self.opp_actions = find_actions(board.state, board.turn_color.opponent)
             if (len(self.my_actions) == 0):
                 print("ERROR: bit_find_actions returned no actions")
-            #print(f"bit_find_actions found {len(self.my_actions)} actions")
 
         self.untried_actions = self.my_actions.copy()  # actions not yet tried
-        
-        #print(f"{len(self.untried_actions)} moves found for mcts")
         
         self.__action_to_children: dict[Action, "MCTSNode"] = (
             {}
@@ -68,9 +66,7 @@ class MCTSNode:
 
         self.results = defaultdict(int)
         self.results[1] = 0  # win
-        # self.results[-1] = 0  # loss
 
-        self.winning_color: PlayerColor | None = None
         self.estimated_time: float = 0
 
     def expand(self, action: Action | None = None):
@@ -78,7 +74,7 @@ class MCTSNode:
         Expand the current node by adding a new child node
         Using opponent move as action
         """
-        board_node: BitBoard = self.board.copy()
+        board_node: SimBoard = self.board.copy()
         if action is None:
             if self.untried_actions:
                 action = random.choice(self.untried_actions)
@@ -90,7 +86,7 @@ class MCTSNode:
         child_node: MCTSNode = MCTSNode(
             board_node,
             parent=self,
-            parent_action=action,
+            parent_action=action
         )
         child_node.estimated_time = self.estimated_time
         if action in self.untried_actions:
@@ -112,64 +108,58 @@ class MCTSNode:
         """
         print("rolling out for turns")
         push_steps = []
-        current_node = self
         tried_times = 0
         while (tried_times != times):
+            current_node = self.tree_policy()
+            if not current_node:
+                break
+            current_board = current_node.board.copy()
             this_push_step = 0
-            while not current_node.is_terminal_node():
-                # light playout policy
-                current_node = current_node.tree_policy()
+            while not current_board.game_over:
+                current_board.apply_action(generate_random_move(
+                    current_board.state, current_board.turn_color))
                 this_push_step += 1
-                # print("pushing step: ", push_step)
-                if not current_node:
-                    warnings.warn("ERROR: No tree policy node found in rollout")
-                    return self.board.turn_count
-                current_node.backpropagate(current_node.board.winner)
+            if current_board.winner == current_node.color:
+                current_node.results[1] += 1
             tried_times += 1
             push_steps.append(this_push_step)
         avg = mean(push_steps)
-        result = ceil(avg / 2) # half of the turns are ours
+        result = round(avg / 2) # half of the turns are ours
         return result
     
-    def new_rollout(self, max_steps) -> 'MCTSNode | None':
+    def new_rollout(self, max_steps) -> None:
         """
         Simulate a random v random game from the current node
         not pushing all the way to the end of the game but stopping at max_steps
         """
-        # make sure max_steps is even so that both players get equal number of moves
-        if max_steps / 2 == 1:
-            max_steps += 1
         push_step = 0
-        current_node = self
-        while not current_node.is_terminal_node() and push_step < max_steps:
-            # light playout policy
-            current_node = current_node.tree_policy()
+        current_board = self.board.copy()
+        while not current_board.game_over and push_step < max_steps:
+            current_board.apply_action(generate_random_move(
+                    current_board.state, current_board.turn_color))
             push_step += 1
-            # print("pushing step: ", push_step)
-            if not current_node:
-                warnings.warn("ERROR: No tree policy node found in rollout")
-                return None
-        if current_node.is_terminal_node():
-            current_node.winning_color = current_node.board.winner
-            return current_node
-        # used if it does not roll out to the end
-        if current_node.greedy_judge() > self.greedy_judge():
-            current_node.winning_color = self.color
-        else:
-            current_node.winning_color = self.color.opponent
-        return current_node
-
-    def backpropagate(self, result: PlayerColor | None):
-        """
-        Backpropagate the result of the simulation up the tree
-        """
-        self.num_visits += 1
-        if result == self.color:
+        if current_board.winner == self.color:
+            # backpropagate the result
             self.results[1] += 1
-        # elif result == root_color.opponent:
-        #     self.results[-1] += 1
-        if self.parent:
-            self.parent.backpropagate(result)
+            return
+        end_node = MCTSNode(current_board)
+        if end_node.heuristics_judge() > 0 and self.color == end_node.color:
+            self.results[1] += 1
+        elif end_node.heuristics_judge() < 0 and self.color != end_node.color:
+            self.results[1] += 1
+        return
+    
+    # def backpropagate(self, result: PlayerColor | None):
+    #     """
+    #     Backpropagate the result of the simulation up the tree
+    #     """
+    #     self.num_visits += 1
+    #     if result == self.color:
+    #         self.results[1] += 1
+    #     # elif result == root_color.opponent:
+    #     #     self.results[-1] += 1
+    #     if self.parent:
+    #         self.parent.backpropagate(result)
 
     def best_child(self, c_param=1.4) -> "MCTSNode":
         """
@@ -232,9 +222,7 @@ class MCTSNode:
             if v.is_terminal_node() and v.board.winner == self.color:
                 return v.parent_action
             # rollout with heuristic and max_steps
-            end_node = v.new_rollout(steps)
-            if end_node:
-                end_node.backpropagate(end_node.winning_color)
+            v.new_rollout(steps-1)
             sim_count += 1
         print("sim_count: ", sim_count)
         # return best action
@@ -253,24 +241,16 @@ class MCTSNode:
         """
         return random.choice(list(self.my_actions))
     
-    def greedy_judge(self) -> int:
+    def heuristics_judge(self) -> int:
         """
         heuristic function to predict if this player is winning
         """ 
-        result = 0
-        if self.parent:
-            result -= len(bit_a_update_actions(self.parent.board, 
-                                         self.board, self.parent.my_actions, 
-                                         self.color.opponent))
-        else:
-            result -= len(bit_find_actions(self.board, self.color.opponent))
+        result = len(self.my_actions) - len(self.opp_actions)
+        # let the number of tokens be the tie breaker if the turn_count is close to the max
         if self.board.turn_count > CLOSE_TO_END:
-            if self.color == PlayerColor.RED:
-                result += round((self.board._red_state - self.board._blue_state) + 
-                                len(self.my_actions)/ MAX_TURNS - self.board.turn_count)
-            else:
-                result += round((self.board._blue_state - self.board._red_state + 
-                                 len(self.my_actions)) / MAX_TURNS - self.board.turn_count)
+            result += round((self.board._player_token_count(self.color)
+                             - self.board._player_token_count(self.color.opponent)) 
+                            / (MAX_TURNS - self.board.turn_count))
         return result
     
     def greedy_explore(self) -> Action | None:
@@ -286,7 +266,7 @@ class MCTSNode:
             action = random.choice(self.untried_actions)
             # new_node is opponent's turn
             new_node = self.get_child(action)
-            value = new_node.greedy_judge()
+            value = new_node.heuristics_judge()
             if value > best_value:
                 best_value = value
                 best_action = action
@@ -309,8 +289,6 @@ class MCTSNode:
                     # recursively delete all other children
                     child.chop_nodes_except()
         else:
-            for child in self.__action_to_children.values():
-                child.chop_nodes_except()
             del self.__action_to_children
             del self.board
             del self.parent

@@ -6,7 +6,7 @@ import random
 
 # import tensorflow as tf
 from agent_mcts.mcts import MCTSNode
-from helpers.bit_board import BitBoard, bit_check_adjacent_cells, bit_generate_random_move, bit_is_valid
+from helpers.movements import check_adjacent_cells, generate_random_move, is_valid
 from helpers.sim_board import SimBoard
 from timeit import default_timer as timer
 from referee.game import (
@@ -14,9 +14,11 @@ from referee.game import (
     Action,
     Action,
     Coord,
+    board,
 )
 from referee.game.constants import MAX_TURNS
 
+DEPTH = 10
 NARROW_SIM_NO = 200
 BACKUP_TIME = 5
 NARROW_MOVE_NO = 70
@@ -24,7 +26,7 @@ NARROW_MOVE_NO = 70
 class Agent:
 
     # attributes
-    board: BitBoard  # state of game
+    board: SimBoard  # state of game
     root: (
         MCTSNode | None
     )  # root node of MCTS tree NOTE: not to initialise until after first two turns
@@ -36,40 +38,38 @@ class Agent:
 
     def action(self, **referee: dict) -> Action:
         if self.board.turn_count < 2:
-            return bit_generate_random_move(self.board, self.color, first_turns=True)
+            return generate_random_move(self.board.state, self.color, first_turns=True)
         else:
             if not self.root:
                 self.root = MCTSNode(self.board.copy())
                 
         # branching factor too high, pick random
-        if (self.root.estimated_time < 0 or 
-            (len(self.root.my_actions) > 200 and self.board.turn_count < 10)):
+        if self.root.estimated_time < 0 or (len(self.root.my_actions) > 200 and self.board.turn_count < 10):
             return self.random_move()
         
         # time count
         if referee:
             start_time = timer()
             time_remaining:float = referee["time_remaining"] # type: ignore
-            estimate_moves = self.root.rollout_turns(10)
-            if estimate_moves == 0:
-                estimate_moves = MAX_TURNS - self.board.turn_count
+            estimate_turns = self.root.rollout_turns(5)
+            if estimate_turns == 0:
+                estimate_turns = MAX_TURNS - self.board.turn_count
             estimation_cost = timer() - start_time
-            estimated_time = (time_remaining - estimation_cost - BACKUP_TIME) / estimate_moves
+            estimated_time = (time_remaining - estimation_cost - BACKUP_TIME) / estimate_turns
             time_left = time_remaining - estimation_cost
             print("Time left: ", time_left)
-            print(f"Estimated time: {estimated_time} for {estimate_moves} moves")
+            print(f"Estimated time: {estimated_time} for {estimate_turns} turns")
         else:
             estimated_time = 10000
         
         self.root.estimated_time = estimated_time
 
-        if estimate_moves > 6 or len(self.root.my_actions) > 100:
+        if len(self.root.my_actions) > NARROW_MOVE_NO:
             # not to waste time on too many branches
-            print("Greedy explore")
-            action = self.root.greedy_explore()
+            action = self.root.best_action(DEPTH,
+                min((int)(len(self.root.my_actions)), NARROW_SIM_NO))
         else:
             # take it serious on intensive situations
-            print("Narrow search")
             action = self.root.best_action(
                 max((int)(len(self.root.my_actions)*2), NARROW_SIM_NO),
             )
@@ -90,7 +90,7 @@ class Agent:
         # print(self.root.board.render(True))
 
     def init(self, color: PlayerColor):
-        self.board = BitBoard()
+        self.board = SimBoard()
         self.color = color
         self.root = None
         self.name = "Agent_MCTS " + self.color.name
@@ -100,8 +100,8 @@ class Agent:
 
     def random_move(self) -> Action:
         action = random.choice(list(self.available_moves))
-        if not bit_is_valid(self.board, action) or not bit_check_adjacent_cells(
-            self.board, list(action.coords), self.color
+        if not is_valid(self.board.state, action) or not check_adjacent_cells(
+            action, self.board.state, self.color
         ):
             print("Invalid action: ", action)
             print("state: ", self.board.render())
