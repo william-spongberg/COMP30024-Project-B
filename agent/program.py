@@ -15,6 +15,7 @@ NARROW_DEPTH = 8
 NARROW_SIM_NO = 200
 NARROW_MOVE_NO = 100
 BACKUP_TIME = 5
+NUM_TURN_ESTIMATION_ROLLOUTS = 2
 
 
 class Agent:
@@ -64,6 +65,7 @@ class Agent:
         if referee:
             self.set_timer(referee)
         else:
+            # if no referee, just set a large default time
             self.estimated_time = 10000
         self.root.estimated_time = self.estimated_time
 
@@ -97,7 +99,7 @@ class Agent:
     def set_timer(self, referee):
         start_time = timer()
         time_remaining: float = referee["time_remaining"]  # type: ignore
-        self.estimated_turns = self.root.rollout_turns(1)  # type: ignore
+        self.estimated_turns = self.root.rollout_turns(NUM_TURN_ESTIMATION_ROLLOUTS)  # type: ignore
 
         if self.estimated_turns == 0:
             self.estimated_turns = MAX_TURNS - self.board.turn_count
