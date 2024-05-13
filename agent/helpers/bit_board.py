@@ -1,5 +1,5 @@
 import random
-from helpers.movements import valid_coords, valid_moves_of_any_empty
+from helpers.movements import valid_coords, valid_moves_of_empty_coord
 from helpers.sim_board import has_action
 from helpers.tetrominoes import make_tetrominoes
 from referee.game.actions import Action
@@ -11,10 +11,14 @@ from referee.game.player import PlayerColor
 # bit methods
 tetrominoes = make_tetrominoes(Coord(0, 0))
 
+# Not in use due to bad efficiency (probably not implmented well)
 
 def bit_check_adjacent_cells(
     board: "BitBoard", coords: list[Coord], color: PlayerColor
 ) -> bool:
+    """
+    Check if the given coordinates have any adjacent cells of the same color
+    """
     for coord in coords:
         for dir in Direction:
             adjacent = coord + dir
@@ -23,9 +27,12 @@ def bit_check_adjacent_cells(
     return False
 
 
-def bit_valid_moves_of_any_empty(
+def bit_valid_moves_of_empty_coord(
     board: "BitBoard", coord: Coord, color: PlayerColor
 ) -> list[Action]:
+    """
+    Get all valid moves for an empty cell
+    """
     if board._cell_occupied(coord):
         print("invalid coord")
         exit(1)
@@ -40,6 +47,9 @@ def bit_valid_moves_of_any_empty(
 def bit_generate_random_move(
     board: "BitBoard", color: PlayerColor, first_turns: bool = False
 ) -> Action:
+    """
+    Find a random move for a given state and player colour.
+    """
     coords = valid_coords(board.state, color, first_turns)
     while coords:
         coord = random.choice(coords)
@@ -53,6 +63,9 @@ def bit_generate_random_move(
 
 
 def bit_has_valid_move(board: "BitBoard", coord: Coord) -> bool:
+    """
+    Check if there is any valid move for the given coordinate
+    """
     for tetromino in tetrominoes:
         action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
         if bit_is_valid(board, action):
@@ -61,6 +74,9 @@ def bit_has_valid_move(board: "BitBoard", coord: Coord) -> bool:
 
 
 def bit_valid_moves(board: "BitBoard", coord: Coord) -> list[Action]:
+    """
+    Find all possible valid actions for the current state
+    """
     valid_moves = []
     for tetromino in tetrominoes:
         action = Action(*[coord + Coord(x, y) for x, y in tetromino.coords])
@@ -70,6 +86,9 @@ def bit_valid_moves(board: "BitBoard", coord: Coord) -> list[Action]:
 
 
 def bit_is_valid(board: "BitBoard", piece: Action) -> bool:
+    """
+    Check if the given piece is valid for the current state
+    """
     for coord in piece.coords:
         if not board._cell_empty(coord):
             return False
@@ -77,6 +96,9 @@ def bit_is_valid(board: "BitBoard", piece: Action) -> bool:
 
 
 def bit_find_actions(board: "BitBoard", color: PlayerColor) -> list[Action]:
+    """
+    Find all possible valid actions for the current state
+    """
     coords: list[Coord] = valid_coords(board.state, color)
     actions: list[Action] = []
     for coord in coords:
@@ -90,6 +112,9 @@ def bit_update_actions(
     my_actions: list[Action],
     color: PlayerColor,
 ):
+    """
+    Update the list of actions that are valid for the current state
+    """
     my_actions_set = set(my_actions)
     invalid_actions = set()
     for action in my_actions_set:
@@ -104,7 +129,7 @@ def bit_update_actions(
     changed_coords = bit_changed_coords(prev_board, new_board)
     for coord in changed_coords:
         if new_board[coord] is None:
-            new_moves = bit_valid_moves_of_any_empty(new_board, coord, color)
+            new_moves = bit_valid_moves_of_empty_coord(new_board, coord, color)
             if not new_moves:
                 print(f"No valid moves for empty cell at {coord}")
             my_actions_set.update(new_moves)
@@ -123,8 +148,8 @@ def bit_update_actions(
     return list(my_actions_set)
 
 
-# function sturcture from old update_actions, works fine with bitboard
-def bit_a_update_actions(
+# function sturcture from old update_actions, works better with bitboard
+def bit_update_actions_new(
     prev_board: "BitBoard",
     new_board: "BitBoard",
     my_actions: list[Action],
@@ -143,7 +168,7 @@ def bit_a_update_actions(
         # two situations: new empty/new needed color
         if new_board[coord].player is None:
             my_actions_set.update(
-                valid_moves_of_any_empty(new_board.state, coord, color)
+                valid_moves_of_empty_coord(new_board.state, coord, color)
             )
         elif new_board[coord].player == color:
             # looking for empty adjacent cells
@@ -154,6 +179,9 @@ def bit_a_update_actions(
 
 
 def bit_changed_coords(prev_board: "BitBoard", new_board: "BitBoard") -> list[Coord]:
+    """
+    Get all coordinates that have changed
+    """
     return [
         Coord(i // BOARD_N, i % BOARD_N)
         for i in range(BOARD_N * BOARD_N)
@@ -165,6 +193,9 @@ def bit_changed_coords(prev_board: "BitBoard", new_board: "BitBoard") -> list[Co
 
 
 def bit_has_action(board: "BitBoard", color: PlayerColor) -> bool:
+    """
+    Check if there is any valid action for the current state
+    """
     coords: list[Coord] = valid_coords(board.state, color)
     for coord in coords:
         if bit_has_valid_move(board, coord):
@@ -178,12 +209,18 @@ class BitBoard:
         init_state: dict[Coord, CellState] | None = None,
         init_color: PlayerColor = PlayerColor.RED,
     ):
+        """
+        Initialize the board with the given state and color
+        """
         self._red_state = 0
         self._blue_state = 0
         self._turn_color: PlayerColor = init_color
         self._turn_count: int = 0
 
     def apply_action(self, action: Action | None = None):
+        """
+        Apply the given action to the board
+        """
         if not action:
             print("ERROR: No action given")
             return
@@ -202,6 +239,9 @@ class BitBoard:
         self._turn_count += 1
 
     def clear_lines(self, action: Action):
+        """
+        Clear the lines that are filled by the given action
+        """
         coords_to_remove = []
 
         for coord in action.coords:

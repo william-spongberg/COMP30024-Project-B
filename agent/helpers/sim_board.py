@@ -4,7 +4,7 @@ from .movements import (
     valid_moves,
     is_valid,
     check_adjacent_cells,
-    valid_moves_of_any_empty,
+    valid_moves_of_empty_coord,
 )
 from referee.game.constants import BOARD_N
 from referee.game.actions import Action
@@ -44,7 +44,7 @@ def update_actions(
     for coord in changed_coords(prev_state, new_state):
         # two situations: new empty/new needed color
         if new_state[coord].player is None:
-            my_actions_set.extend(valid_moves_of_any_empty(new_state, coord, color))
+            my_actions_set.extend(valid_moves_of_empty_coord(new_state, coord, color))
         elif new_state[coord].player == color:
             # looking for empty adjacent cells
             for adjacent in [coord + dir for dir in Direction]:
@@ -79,6 +79,9 @@ def has_action(state: dict[Coord, CellState], color: PlayerColor) -> bool:
 
 
 def empty_state() -> dict[Coord, CellState]:
+    """
+    Get a new empty state
+    """
     return {Coord(r, c): CellState() for r in range(BOARD_N) for c in range(BOARD_N)}
 
 
@@ -173,6 +176,9 @@ class SimBoard:
         return output
 
     def copy(self):
+        """
+        Customised copy method to replace deepcopy
+        """
         new_board = SimBoard(self._state.copy(), self._turn_color)
         new_board._turn_count = self._turn_count
         return new_board

@@ -68,7 +68,7 @@ class MCTSNode:
 
         self.estimated_time: float = 0
 
-    def expand(self, action: Action | None = None):
+    def expansion(self, action: Action | None = None):
         """
         Expand the current node by adding a new child node
         Using opponent move as action
@@ -97,14 +97,15 @@ class MCTSNode:
             return True
         return False
 
-    def rollout_turns(self, rollouts: int) -> int:
+    def estimate_turns(self, times: int) -> int:
         """
         Simulate a random v random game from the current node
+        Return the estimated turns required for us to finish the game
         """
-        print("rolling out for turns")
+        print("estimating turns")
         push_steps = []
         tried_times = 0
-        while tried_times != rollouts:
+        while tried_times != times:
             current_node = self.tree_policy()
             if not current_node:
                 break
@@ -115,6 +116,7 @@ class MCTSNode:
                     generate_random_move(current_board.state, current_board.turn_color)
                 )
                 this_push_step += 1
+            # backpropagate the result
             if current_board.winner_color == current_node.color:
                 current_node.results[1] += 1
             else:
@@ -139,8 +141,8 @@ class MCTSNode:
                 generate_random_move(current_board.state, current_board.turn_color)
             )
             push_step += 1
+        # backpropagate the result
         if current_board.winner_color == self.color:
-            # backpropagate the result
             self.results[1] += 1
             return
         elif current_board.winner_color == self.color.opponent:
@@ -160,6 +162,7 @@ class MCTSNode:
         best_child = None
         for child in self.__action_to_children.values():
             if child.num_visits <= 0 or self.num_visits <= 0:
+                # children are opposite color so we want to maximize their loss
                 exploit: float = child.results[-1]
                 explore: float = 0.0
             else:
@@ -185,7 +188,7 @@ class MCTSNode:
         # select nodes to expand
         if not self.is_terminal_node():
             if not self.is_fully_expanded():
-                return self.expand()
+                return self.expansion()
             else:
                 if not self.my_actions:
                     print("ERROR: No actions available")
@@ -201,6 +204,7 @@ class MCTSNode:
         """
         sim_count = 0
         start_time = timer()
+        # repeat until time is up or max simulations reached
         for _ in range(sim_no):
             if timer() - start_time > self.estimated_time:
                 break
@@ -209,10 +213,11 @@ class MCTSNode:
             if not v:
                 print("ERROR: No tree policy node found")
                 return None
-            # simulation
+            # if the move wins the game, cut the search directly
             if v.is_terminal_node() and v.board.winner_color == self.color:
                 return v.parent_action
-            # rollout with heuristic and max_steps
+            # simulation with heuristic and max_steps, 
+            # steps-1 due to picking node in tree_policy
             v.new_rollout(steps - 1)
             sim_count += 1
         
@@ -277,5 +282,5 @@ class MCTSNode:
             return self.__action_to_children[action]
         else:
             # has not been expanded yet
-            self.expand(action)
+            self.expansion(action)
             return self.__action_to_children[action]

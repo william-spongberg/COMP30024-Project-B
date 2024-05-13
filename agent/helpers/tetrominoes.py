@@ -1,5 +1,4 @@
 from referee.game import Action, Coord
-from referee.game.board import Board
 from referee.game.pieces import Piece, create_piece, PieceType
 
 BOARD_N = 11
@@ -33,13 +32,3 @@ def make_tetrominoes(coord: Coord) -> list[Action]:
     moved_tetrominoes = list(set(moved_tetrominoes))
     
     return moved_tetrominoes
-
-
-def test_tetronimoes():
-    with open("tetronimoes_test.txt", "w") as f:
-        print("testing tetrominoes", file=f)
-        for tetromino in make_tetrominoes(Coord(5, 5)):
-            board = Board()
-            board.apply_action(tetromino)
-            print(board.render(), file=f)
-        print("num tetrominoes:", len(make_tetrominoes(Coord(5, 5))), file=f)

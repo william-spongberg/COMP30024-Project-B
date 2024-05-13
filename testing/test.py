@@ -5,9 +5,6 @@ from timeit import default_timer as timer
 
 from agent.program import AgentMCTS
 from agent_random.program import AgentRandom
-from agent.helpers.bit_board import BitBoard
-from agent.helpers.sim_board import SimBoard
-from agent.helpers.tetrominoes import test_tetronimoes
 from referee.game.board import Board
 from referee.game.player import PlayerColor
 

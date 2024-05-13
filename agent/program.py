@@ -4,7 +4,7 @@
 import random
 
 from agent.mcts import MCTSNode
-from .helpers.movements import check_adjacent_cells, generate_random_move, is_valid
+from .helpers.movements import generate_random_move
 from .helpers.sim_board import SimBoard
 from timeit import default_timer as timer
 from referee.game import PlayerColor, Action, Action
@@ -12,8 +12,8 @@ from referee.game.constants import MAX_TURNS
 
 WIDE_DEPTH = 4
 NARROW_DEPTH = 8
-NARROW_SIM_NO = 200
-NARROW_MOVE_NO = 100
+DEFAULT_SIM_NO = 200
+NARROW_MOVE_STANDARD = 100
 BACKUP_TIME = 5
 NUM_TURN_ESTIMATION_ROLLOUTS = 3
 
@@ -32,6 +32,9 @@ class Agent:
         self.init(color)
 
     def init(self, color: PlayerColor):
+        """
+        Initialize the agent
+        """
         # agent info
         self.color = color
         self.name = "Agent_MCTS " + self.color.name
@@ -45,6 +48,9 @@ class Agent:
         print(f"{self.name} *initiated*: {self.color}")
 
     def action(self, **referee: dict) -> Action:
+        """
+        Generate an action for the agent
+        """
         # first two turns, do random moves
         if self.board.turn_count < 2:
             return generate_random_move(self.board.state, self.color, first_turns=True)
@@ -68,17 +74,17 @@ class Agent:
         self.root.estimated_time = self.estimated_time
 
         # casual search if not too many moves
-        if len(self.root.my_actions) > NARROW_MOVE_NO:
+        if len(self.root.my_actions) > NARROW_MOVE_STANDARD:
             print("Wide search")
             action = self.root.best_action(
-                WIDE_DEPTH, min((int)(len(self.root.my_actions)), NARROW_SIM_NO)
+                WIDE_DEPTH, min((int)(len(self.root.my_actions)), DEFAULT_SIM_NO)
             )
         else:
             # take it serious on intensive situations
             print("Narrow search")
             action = self.root.best_action(
                 NARROW_DEPTH,
-                max((int)(len(self.root.my_actions) * 2), NARROW_SIM_NO),
+                max((int)(len(self.root.my_actions) * 2), DEFAULT_SIM_NO),
             )
 
         if action:
@@ -87,6 +93,9 @@ class Agent:
         return self.random_move()
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
+        """
+        Update the agent with the action resolved by the referee
+        """
         self.board.apply_action(action)
         if not self.root:
             return
@@ -95,10 +104,13 @@ class Agent:
         self.root = new_root
 
     def set_timer(self, referee):
+        """
+        Set the timer for the agent to make a move
+        """
         start_time = timer()
         time_remaining: float = referee["time_remaining"]  # type: ignore
-        
-        self.estimated_turns = self.root.rollout_turns(NUM_TURN_ESTIMATION_ROLLOUTS)  # type: ignore
+        self.estimated_turns = self.root.estimate_turns(NUM_TURN_ESTIMATION_ROLLOUTS)  # type: ignore
+
         if self.estimated_turns == 0:
             self.estimated_turns = MAX_TURNS - self.board.turn_count
             

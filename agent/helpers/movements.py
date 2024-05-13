@@ -91,9 +91,12 @@ def valid_moves(state: dict[Coord, CellState], coord: Coord) -> list[Action]:
     return valid_moves
 
 
-def valid_moves_of_any_empty(
+def valid_moves_of_empty_coord(
     state: dict[Coord, CellState], coord: Coord, color: PlayerColor
 ) -> list[Action]:
+    """
+    Get all possible valid tetrominoes at a given empty coordinate for a given state.
+    """
     if state[coord].player is not None:
         print("invalid coord")
         exit(1)
