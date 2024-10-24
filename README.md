@@ -1,26 +1,38 @@
-# COMP30024 Artificial Intelligence, Semester 1 2024
+# Project Part B: Game Playing Agent
 
-## Project Part B: Game Playing Agent
+*Created for COMP30024 Artificial Intelligence in Semester 1 of 2024 for the University of Melbourne.*
 
-### Agents
+*Authored by William Spongberg and Gaoyongle Zhang*
+
+---
+
+Python program that plays two agents against each other in **Tetress**.
+
+Find details of the assignment [here](/AI_2024_Project_PartB.pdf).
+
+Find rules of the game [here](/AI_2024_Game_Rules.pdf).
+
+Find our report [here](/AI%20-%20Project%202%20Report.pdf).
+
+## Agents
 
 - `agent_random` - random agent
 - `agent_experimental` - experimental game-within-a-game agent
 - `agent` - MCTS agent
 
-### Running the project
+## Running the project
 
 python -m referee -c [agent] [agent]
 
-- (e.g python -m referee -c agent_random agent)
+*e.g. python -m referee -c agent_random agent*
 
-#### Running with limits
+### Running with limits
 
 python -m referee -s 250 -t 180.0 -c [agent] [agent]
 
-- (e.g python -m referee -s 250 -t 180.0 -c agent_random agent)
+*e.g. python -m referee -s 250 -t 180.0 -c agent_random agent*
 
-### Testing the project
+## Testing the project
 
 1. python -m pip install snakeviz
 
