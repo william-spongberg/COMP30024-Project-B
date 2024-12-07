@@ -2,15 +2,13 @@
 
 *Created for COMP30024 Artificial Intelligence in Semester 1 of 2024 for the University of Melbourne.*
 
-*Authored by William Spongberg and Gaoyongle Zhang*
-
 ---
 
 Python program that plays two agents against each other in **Tetress**.
 
 Find details of the assignment [here](/AI_2024_Project_PartB.pdf).
 
-Find rules of the game [here](/AI_2024_Game_Rules.pdf).
+Find the rules of the game [here](/AI_2024_Game_Rules.pdf).
 
 Find our report [here](/AI%20-%20Project%202%20Report.pdf).
 
@@ -35,6 +33,12 @@ python -m referee -s 250 -t 180.0 -c [agent] [agent]
 ## Testing the project
 
 1. python -m pip install snakeviz
+
+
+## Team Members
+
+- William Spongberg
+- Gaoyongle Zhang
 
 2. python test.py [agent] [agent]
    - (e.g python test.py agent_random agent)
