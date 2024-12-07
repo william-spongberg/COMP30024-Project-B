@@ -33,14 +33,11 @@ python -m referee -s 250 -t 180.0 -c [agent] [agent]
 ## Testing the project
 
 1. python -m pip install snakeviz
-
+2. 2. python test.py [agent] [agent]
+   - (e.g python test.py agent_random agent)
+3. snakeviz test.prof
 
 ## Team Members
 
 - William Spongberg
 - Gaoyongle Zhang
-
-2. python test.py [agent] [agent]
-   - (e.g python test.py agent_random agent)
-
-3. snakeviz test.prof
